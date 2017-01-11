@@ -223,7 +223,7 @@ cv::Mat extractColumn( const cv::Mat& m, int idxC)
 
 
 
-class RepulsionMapMetaControlLaw
+class MetaControlLaw
 {
 	private :
 	
@@ -276,7 +276,7 @@ class RepulsionMapMetaControlLaw
 	
 	public :
 	
-	RepulsionMapMetaControlLaw(const float& tresholdDist_ = 1.0f, const float& tresholdFarEnough_ = 5.0f, const float& tresholdDistPair_ = 0.5f) : nbrObj(0), lastClock( clock() ), needToOptimize(false), tresholdDist(tresholdDist_),currentOdometry(cv::Mat::zeros(2,1,CV_32F)), pnh(NULL), pairingToDo(false), tresholdFarEnough(tresholdFarEnough_), tresholdDistPair(tresholdDistPair_)
+	MetaControlLaw(const float& tresholdDist_ = 1.0f, const float& tresholdFarEnough_ = 5.0f, const float& tresholdDistPair_ = 0.5f) : nbrObj(0), lastClock( clock() ), needToOptimize(false), tresholdDist(tresholdDist_),currentOdometry(cv::Mat::zeros(2,1,CV_32F)), pnh(NULL), pairingToDo(false), tresholdFarEnough(tresholdFarEnough_), tresholdDistPair(tresholdDistPair_)
 	{
 		this->nbrAngularIntervals = 8;
 		this->angularIntervals = cv::Mat::zeros( this->nbrAngularIntervals, 2, CV_32F);
@@ -311,7 +311,7 @@ class RepulsionMapMetaControlLaw
 		this->Interval2Bias.at<float>(0,7) = PI/12+testBias;
 	}
 	
-	~RepulsionMapMetaControlLaw()
+	~MetaControlLaw()
 	{
 	
 	}
@@ -627,10 +627,6 @@ class RepulsionMapMetaControlLaw
 		this->nbrObj = this->pairs.cols;
 		
 		this->newState = this->predState;
-		float mvx = 0.0f;
-		float mvy = 0.0f;
-		float mvz = 0.0f;
-		
 		std::cout << "NBR PAIR : " << this->nbrObj << std::endl;
 		
 		//let us update old positions :
@@ -658,10 +654,6 @@ class RepulsionMapMetaControlLaw
 			this->newState.at<float>( 6, idxOld) = ( this->inputState.at<float>(1,idxInput) - this->predState.at<float>(1,idxOld) )/this->elapsedTime;
 			this->newState.at<float>( 7, idxOld) = ( this->inputState.at<float>(2,idxInput) - this->predState.at<float>(2,idxOld) )/this->elapsedTime;
 			
-			mvx += this->newState.at<float>(5,idxOld);
-			mvy += this->newState.at<float>(6,idxOld);
-			mvz += this->newState.at<float>(7,idxOld);
-			
 			//Update accelerations :
 			/*
 			this->newState.at<float>( 6, i) = ( this->newState.at<float>(4,i) - this->state.at<float>(4,idxOld) )/this->elapsedTime;
@@ -669,9 +661,6 @@ class RepulsionMapMetaControlLaw
 			*/
 		}
 		
-		std::cout << " MEAN VX : " << mvx << std::endl;
-		std::cout << " MEAN VY : " << mvy << std::endl;
-		std::cout << " MEAN VZ : " << mvz << std::endl;
 		
 		
 		//let us remove the positions that are far enough of the robot :
@@ -730,17 +719,11 @@ class RepulsionMapMetaControlLaw
 		}
 		
 		std::cout << " NBR OF UNMATCHED OBJS : " << nbrUnmatched << std::endl;
-		//std::cout	<< " INPUT STATE : " <<	this->inputState << std::endl;
-		//std::cout	<< " NEW STATE : " <<	this->newState << std::endl;
-		
 		
 		//let us add those to newState :
 		cv::Mat add = cv::Mat::zeros( this->inputState.rows, 1, CV_32F);
 		for(int i=0;i<nbrUnmatched;i++)
 		{
-			//cv::Range r[2] = {cv::Range::all(), cv::Range(i,i+1)};
-			//addAll(r) = extractColumn( this->inputState, unmatchedIdx[i]);
-			
 			extractColumn( this->inputState, unmatchedIdx[i]).copyTo(add);			
 			cv::hconcat( this->newState, add, this->newState);
 		}
@@ -1026,36 +1009,6 @@ class RepulsionMapMetaControlLaw
 		
 		return sqrt(ret);
 	}
-	
-	
-	/*
-	cv::Mat slice( const cv::Mat& x, const std::vector<float>& sr, const std::vector<float>& sc)
-	{
-		cv::Mat ret;
-		
-		if( sr.size() == 1)
-		{
-			if( sr[0] == -1)
-			{
-				
-			}
-			else
-			{
-			
-			}
-		}
-		else if(sc.size() == 1)
-		{
-		
-		}
-		else
-		{
-			//TODO : not needed for the moment though...
-		}
-		
-		return ret;
-	}
-	*/
 
 };
 
@@ -1091,9 +1044,7 @@ class OPUSim_ControlLaw
 	
 	PIDControllerM<float> pid;
 	
-	public :
-	
-	ros::NodeHandle nh;
+	MetaControlLaw metacl;
 	
 	
 	image_transport::ImageTransport* it;
@@ -1103,9 +1054,24 @@ class OPUSim_ControlLaw
 	int robot_number;
 	geometry_msgs::Twist twistmsg;
 	
-	OPUSim_ControlLaw(const int& robot_number_, const bool& emergencyBreak_ = false, const bool& verbose_ = false, const float& gain_=4.0f, const float& R_=3.0f, const float& a_=1.0f, const float& epsilon_=10.0f, const float& kv_=0.1f, const float& kw_=0.2f, const float& Omega_=1.0f) : continuer(true), robot_number(robot_number_), R(R_), a(a_), epsilon(epsilon_), kv(kv_), kw(kw_), Omega(Omega_), gain(gain_), THETA(0.0f), r(0.0f), emergencyBreak(emergencyBreak_), verbose(verbose_),tau(10.0f)
+	
+	public :
+	
+	ros::NodeHandle nh;
+	
+	
+	//------------------------------
+	//------------------------------
+	
+	
+	OPUSim_ControlLaw(const int& robot_number_, const bool& emergencyBreak_ = false, const bool& verbose_ = false, const float& gain_=4.0f, const float& R_=3.0f, const float& a_=1.0f, const float& epsilon_=10.0f, const float& kv_=0.1f, const float& kw_=0.2f, const float& Omega_=1.0f, const float& tresholdDistAccount = 1.0f, const float& tresholdDistFarEnough = 5.0f, const float& tresholdDistPair = 0.5f) : continuer(true), robot_number(robot_number_), R(R_), a(a_), epsilon(epsilon_), kv(kv_), kw(kw_), Omega(Omega_), gain(gain_), THETA(0.0f), r(0.0f), emergencyBreak(emergencyBreak_), verbose(verbose_),tau(10.0f)
 	{			
 		it = new image_transport::ImageTransport(nh);
+		
+		this->metacl.setPNH( &(this->nh) );
+		this->metacl.setTresholdDistAccount( tresholdDistAccount);
+		this->metacl.setTresholdDistFarEnough( tresholdDistFarEnough);
+		this->metacl.setTresholdDistPair( tresholdDistPair);
 		
 		std::string path( "/robot_model_teleop_"+std::to_string(robot_number)+"/");
 		//std::string path( "/robot_model_teleop/");
@@ -1215,7 +1181,7 @@ class OPUSim_ControlLaw
 				
 				if(this->verbose)
 				{
-					std::cout << " CURRENT MSG : " << currentmsg << std::endl;
+					std::cout << " CURRENT MSG FROM RSO : " << currentmsg << std::endl;
 				}
 				
 				//----------------------------------------------------
@@ -1306,8 +1272,38 @@ class OPUSim_ControlLaw
 				
 				
 				//----------------------------------------------------
+				//COMPUTE META Control Law :
 				//----------------------------------------------------
-				//COMPUTE QUANTITIES :
+				cv::Mat desiredControlInput = cv::Mat::zeros( 2,1, CV_32F);
+				desiredControlInput.at<float>(0,0) = v;
+				desiredControlInput.at<float>(1,0) = omega;
+				
+				if(goOn)
+				{
+					this->metacl.observation(currentmsg);
+				}
+				
+				/*if(goOnDepthObs)
+				{
+					//observe PointCloud :
+					metacl.observationDepthObs(currentDepthObsMsg);
+				}
+				*/
+				
+				//observe velocity :
+				cv::Mat odo = cv::Mat::zeros(2,1,CV_32F);
+				odo.at<float>(0,0) = -this->twistmsg.linear.x;
+				odo.at<float>(1,0) = -this->twistmsg.angular.z;
+				
+				this->metacl.observeOdometry( odo );
+				
+				//filtering that prevent obstacles to become hurdles to the correct orientation of the robot...
+				bool optimize = true;
+				
+				cv::Mat tailoredControlInput( this->metacl.run( desiredControlInput, optimize) );
+				v = tailoredControlInput.at<float>(0,0);
+				omega = tailoredControlInput.at<float>(1,0);
+				
 				//----------------------------------------------------
 				//----------------------------------------------------
 				
@@ -1321,50 +1317,55 @@ class OPUSim_ControlLaw
 				//----------------------------------------------------
 				//----------------------------------------------------
 				
+			}
+			else
+			{
 				//----------------------------------------------------
+				//UPDATE META Control Law :
 				//----------------------------------------------------
-				// MESSAGE :
-				//----------------------------------------------------
-				//----------------------------------------------------
+				//observe velocity :
+				cv::Mat odo = cv::Mat::zeros(2,1,CV_32F);
+				odo.at<float>(0,0) = -this->twistmsg.linear.x;
+				odo.at<float>(1,0) = -this->twistmsg.angular.z;
 				
+				this->metacl.observeOdometry( odo );
 				
-				twistmsg.linear.x = -v;
-				twistmsg.linear.y = 0.0f;
-				twistmsg.linear.z = 0.0f;
+				//filtering that prevent obstacles to become hurdles to the correct orientation of the robot...
+				bool optimize = true;
 				
-				twistmsg.angular.x = 0.0f;
-				twistmsg.angular.y = 0.0f;
-				twistmsg.angular.z = -omega;
-				
-				if(this->verbose)
-				{
-					std::cout << " V x W : " << v << " x " << omega << " // r filtered x input : " << r << " x " << rinput << " // phi_i_i+1 : " << mintheta << std::endl;
-				}
-				
+				cv::Mat tailoredControlInput( this->metacl.run( desiredControlInput, optimize) );
+				v = tailoredControlInput.at<float>(0,0);
+				omega = tailoredControlInput.at<float>(1,0);		
 				//----------------------------------------------------
 				//----------------------------------------------------
-				//----------------------------------------------------
-				
-				//----------------------------------------------------
-				//----------------------------------------------------
-				//----------------------------------------------------
-				
-				//PUSHING :
-				
 				
 			}
 			
-			// 10 Hz control loop :
-			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 			//----------------------------
 			//		Publisher
 			//----------------------------
-		
-			//--------------------------------------------
-			//
-			//	Convert CvImage to ROS image message and publish it to camera/image_processed topic
-			//
-			//--------------------------------------------
+			//----------------------------------------------------
+			
+			//----------------------------------------------------
+			// MESSAGE :
+			//----------------------------------------------------
+			//----------------------------------------------------
+			
+			
+			twistmsg.linear.x = -v;
+			twistmsg.linear.y = 0.0f;
+			twistmsg.linear.z = 0.0f;
+			
+			twistmsg.angular.x = 0.0f;
+			twistmsg.angular.y = 0.0f;
+			twistmsg.angular.z = -omega;
+			
+			if(this->verbose && goOn)
+			{ 
+				std::cout << " V x W : " << v << " x " << omega << " // r filtered x input : " << r << " x " << rinput << " // phi_i_i+1 : " << mintheta << std::endl;
+			}
+			
+			
 			twistpub.publish(twistmsg);
 			
 			
