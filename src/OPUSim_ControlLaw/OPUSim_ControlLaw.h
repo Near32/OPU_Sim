@@ -258,6 +258,7 @@ class RepulsionMapMetaControlLaw
 	*/
 	
 	cv::Mat pairs;
+	float tresholdDistPair;
 	cv::Mat tailoredControlInput;
 	
 	bool needToOptimize;
@@ -275,7 +276,7 @@ class RepulsionMapMetaControlLaw
 	
 	public :
 	
-	RepulsionMapMetaControlLaw(const float& tresholdDist_ = 1.0f, const float& tresholdFarEnough_ = 5.0f) : nbrObj(0), lastClock( clock() ), needToOptimize(false), tresholdDist(tresholdDist_),currentOdometry(cv::Mat::zeros(2,1,CV_32F)), pnh(NULL), pairingToDo(false), tresholdFarEnough(tresholdFarEnough_)
+	RepulsionMapMetaControlLaw(const float& tresholdDist_ = 1.0f, const float& tresholdFarEnough_ = 5.0f, const float& tresholdDistPair_ = 0.5f) : nbrObj(0), lastClock( clock() ), needToOptimize(false), tresholdDist(tresholdDist_),currentOdometry(cv::Mat::zeros(2,1,CV_32F)), pnh(NULL), pairingToDo(false), tresholdFarEnough(tresholdFarEnough_), tresholdDistPair(tresholdDistPair_)
 	{
 		this->nbrAngularIntervals = 8;
 		this->angularIntervals = cv::Mat::zeros( this->nbrAngularIntervals, 2, CV_32F);
@@ -332,39 +333,52 @@ class RepulsionMapMetaControlLaw
 		this->tresholdFarEnough = tresholdDistFarEnough;
 	}
 	
+	void setTresholdDistPair( const float& tresholdDistPair)
+	{
+		this->tresholdDistPair = tresholdDistPair;
+	}
+	
 	void observation( const cv::Mat& inputMsg)
 	{
 		/*
-		Deals with the parsing of the message in order to create the inputState :
+		Deals with the parsing of the message in order to create the inputState with respect to obstacles seen by the Depth sensor :
 		Argument(s) :
-		- inputMsg : message delivered by RP_RO... : 
+		- inputMsg : message delivered by OPUSim_RO... : 
 		Architecture of the message :
 		first column : nbrObject, 0
-		next columns : (r,theta) of the visible objects : in the current robot frame.
-		//TODO : make the modification in RP_RelativeOdometry...
-		last column : (radius, thetaOmnidirectional) sensor to target, if any...
-		
-		(- inputObs : message delivered by the Obstacle-related sensor...)
+		next columns : (x,y,z) of the visible objects : in the current robot frame.
 		*/
 		
 		//Let us set up the elapsed time :
 		this->elapsedTime = float( clock() - this->lastClock) / CLOCKS_PER_SEC ;
 		this->lastClock = clock();
 		
-		
 		bool needToInit = false;
-		
 		if(this->nbrObj == 0)
 		{
-			/*
-			Then we will need to initialize it all :
-			- velocities are initialized to zero...
-			*/
 			needToInit = true;
 		}
 	
 		//TODO : change that line when we add the message from the obstacle sensor...
-		this->nbrObj = inputMsg.at<float>(0,0);
+		int nbrObjNearEnough = 0;
+		std::vector<bool> nearEnough(inputMsg.cols,false);
+		//beware : the first column is not a point...
+		for(int i=1;i<inputMsg.cols;i++)
+		{
+			float x = inputMsg.at<float>(0,i);
+			float y = inputMsg.at<float>(1,i);
+			float z = inputMsg.at<float>(2,i);
+			
+			float dist = sqrt(x*x*+z*z);
+			
+			if( dist < this->tresholdFarEnough)
+			{
+				nearEnough[i] = true;
+				nbrObjNearEnough++;
+			}
+		}
+		
+		this->nbrObj = nbrObjNearEnough;
 	
 		if( this->nbrObj == 0)
 		{
@@ -380,38 +394,46 @@ class RepulsionMapMetaControlLaw
 		/*
 		let us go on : we just have to parse the message and create the inputState :
 		*/
+		this->inputState = cv::Mat::zeros( 5, this->nbrObj, CV_32F);
+		int icountState = 0;
 		
-	
-		this->inputState = cv::Mat::zeros( 4, this->nbrObj, CV_32F);
-	
-		for(int i=1;i<=this->inputState.cols;i++)
+		for(int i=1;i<=inputMsg.cols;i++)
 		{
-			float r = inputMsg.at<float>(0,i);
-			float theta = inputMsg.at<float>(1,i);
-		
-			float x = r*cos(theta);
-			float y = r*sin(theta);
-		
-			float isTarget = (inputMsg.at<float>(2,i) == 1.0f ? 1.0f : 0.0f);
-			float isObstacle = 1.0f;
-		
-			this->inputState.at<float>(0,i-1) = x;
-			this->inputState.at<float>(1,i-1) = y;
-			this->inputState.at<float>(2,i-1) = isTarget;
-			this->inputState.at<float>(3,i-1) = isObstacle;
+			if( nearEnough[i] )
+			{
+				float x = inputMsg.at<float>(0,i);
+				float y = inputMsg.at<float>(1,i);
+				float z = inputMsg.at<float>(2,i);
+	
+				float isTarget = 0.0f;
+				float isObstacle = 1.0f;
+	
+				this->inputState.at<float>(0,icountState) = x;
+				this->inputState.at<float>(1,icountState) = y;
+				this->inputState.at<float>(2,icountState) = z;
+				this->inputState.at<float>(3,icountState) = isTarget;
+				this->inputState.at<float>(4,icountState) = isObstacle;
+				
+				icountState++;
+			}
 		
 		}
 		
 		//std::cout << "INPUT STATE : " << this->inputState << std::endl;
 		
+		//Using only velocities... :
+		cv::vconcat( this->inputState, cv::Mat::zeros( cv::Size(this->nbrObj,3), CV_32F), this->inputState);
+		//Using velocities and accelerations ... :
+		//cv::vconcat( this->inputState, cv::Mat::zeros( cv::Size(this->nbrObj,6), CV_32F), this->inputState);
 		
 		if(needToInit)
 		{
-			//Using only velocities... :
-			cv::vconcat( this->inputState, cv::Mat::zeros( cv::Size(this->nbrObj,3), CV_32F), this->state);
-			//Using velocities and accelerations ... :
-			//cv::vconcat( this->inputState, cv::Mat::zeros( cv::Size(this->nbrObj,6), CV_32F), this->state);
+			this->state = this->inputState;
+			this->predState = this->inputState;
+			this->newState = this->inputState;
 		}
+		
+		this->pairingToDo = true;
 		
 	}
 	
@@ -422,7 +444,7 @@ class RepulsionMapMetaControlLaw
 		/*
 		Deals with the parsing of the message in order to create the inputState with respect to obstacles seen by the Depth sensor :
 		Argument(s) :
-		- inputMsg : message delivered by RP_RO... : 
+		- inputMsg : message delivered by OPUSim_RangeSensor... : 
 		Architecture of the message :
 		first column : nbrObject, 0
 		next columns : (x,y,z) of the visible objects : in the current robot frame.
@@ -604,7 +626,6 @@ class RepulsionMapMetaControlLaw
 		
 		this->nbrObj = this->pairs.cols;
 		
-		//Using velocities only :
 		this->newState = this->predState;
 		float mvx = 0.0f;
 		float mvy = 0.0f;
@@ -629,13 +650,13 @@ class RepulsionMapMetaControlLaw
 			
 			//Update velocities :
 			/*
-			this->newState.at<float>( 5, idxOld) = -this->currentVelocity.at<float>(0,0) + ( this->newState.at<float>(0,idxOld) - this->state.at<float>(0,idxOld) )/this->elapsedTime;
-			this->newState.at<float>( 6, idxOld) = -this->currentVelocity.at<float>(1,0) + ( this->newState.at<float>(1,idxOld) - this->state.at<float>(1,idxOld) )/this->elapsedTime;
-			this->newState.at<float>( 7, idxOld) = -this->currentVelocity.at<float>(2,0) + ( this->newState.at<float>(2,idxOld) - this->state.at<float>(2,idxOld) )/this->elapsedTime;
-			*/
 			this->newState.at<float>( 5, idxOld) = ( this->newState.at<float>(0,idxOld) - this->predState.at<float>(0,idxOld) )/this->elapsedTime;
 			this->newState.at<float>( 6, idxOld) = ( this->newState.at<float>(1,idxOld) - this->predState.at<float>(1,idxOld) )/this->elapsedTime;
 			this->newState.at<float>( 7, idxOld) = ( this->newState.at<float>(2,idxOld) - this->predState.at<float>(2,idxOld) )/this->elapsedTime;
+			*/
+			this->newState.at<float>( 5, idxOld) = ( this->inputState.at<float>(0,idxInput) - this->predState.at<float>(0,idxOld) )/this->elapsedTime;
+			this->newState.at<float>( 6, idxOld) = ( this->inputState.at<float>(1,idxInput) - this->predState.at<float>(1,idxOld) )/this->elapsedTime;
+			this->newState.at<float>( 7, idxOld) = ( this->inputState.at<float>(2,idxInput) - this->predState.at<float>(2,idxOld) )/this->elapsedTime;
 			
 			mvx += this->newState.at<float>(5,idxOld);
 			mvy += this->newState.at<float>(6,idxOld);
@@ -654,6 +675,7 @@ class RepulsionMapMetaControlLaw
 		
 		
 		//let us remove the positions that are far enough of the robot :
+		int nbrRemoved = 0;
 		for(int i=0;i<this->newState.cols;i++)
 		{
 			float x = this->newState.at<float>(0,i);
@@ -664,6 +686,7 @@ class RepulsionMapMetaControlLaw
 			
 			if( dist > this->tresholdFarEnough)
 			{
+				nbrRemoved++;
 				if(this->newState.cols-1)
 				{					
 					this->newState = removeColumn(this->newState, i);
@@ -678,6 +701,9 @@ class RepulsionMapMetaControlLaw
 				}
 			}
 		}
+		
+		std::cout << " NBR OF REMOVED OBJS : " << nbrRemoved << std::endl;
+		
 		
 		//let us add new positions, previously unseen / unmatched positions out of the inputState.
 		// what are those positions :
@@ -703,27 +729,21 @@ class RepulsionMapMetaControlLaw
 			}
 		}
 		
+		std::cout << " NBR OF UNMATCHED OBJS : " << nbrUnmatched << std::endl;
 		//std::cout	<< " INPUT STATE : " <<	this->inputState << std::endl;
 		//std::cout	<< " NEW STATE : " <<	this->newState << std::endl;
 		
 		
 		//let us add those to newState :
-		//cv::Mat addAll = cv::Mat::zeros( this->inputState.rows, unmatchedIdx.size(), CV_32F);
-		
+		cv::Mat add = cv::Mat::zeros( this->inputState.rows, 1, CV_32F);
 		for(int i=0;i<nbrUnmatched;i++)
 		{
 			//cv::Range r[2] = {cv::Range::all(), cv::Range(i,i+1)};
 			//addAll(r) = extractColumn( this->inputState, unmatchedIdx[i]);
 			
-			cv::Mat add;
-			extractColumn( this->inputState, unmatchedIdx[i]).copyTo(add);
-			//std::cout << " unmatched idx : " << unmatchedIdx[i] << std::endl;
-			//std::cout	<< " added STATE : " <<	add << std::endl;
-			
+			extractColumn( this->inputState, unmatchedIdx[i]).copyTo(add);			
 			cv::hconcat( this->newState, add, this->newState);
 		}
-		
-		//cv::hconcat(this->newState, addAll, this->newState);
 				
 		
 		//let us actually update the state :
@@ -945,7 +965,7 @@ class RepulsionMapMetaControlLaw
 			}
 		}
 		
-		//Let us pair those fellows by searching for the minimal distance until we reach the minimum between the number of newly observed objected and the number of previously observed object, as long as there are some :
+		//Let us pair those fellows by searching for the minimal distance until we reach the minimum between the number of newly observed objected and the number of previously observed object, as long as there are some, or as long as those are close enough :
 		int minimalNbrObj = this->nbrObj;
 		if( minimalNbrObj > this->predState.cols)
 		{
@@ -958,26 +978,38 @@ class RepulsionMapMetaControlLaw
 		
 		while( size < minimalNbrObj )
 		{
-			double dummy;
+			double valuemin;
 			double maxElimination;
 			cv::Point min_loc, dummy_loc;
-			cv::minMaxLoc(distM, &dummy, &maxElimination, &min_loc, &dummy_loc);
+			cv::minMaxLoc(distM, &valuemin, &maxElimination, &min_loc, &dummy_loc);
 			
-			//let us eliminate the pair :
-			for(int i=0;i<this->inputState.cols;i++)
+			if( (float)valuemin < this->tresholdDistPair )
 			{
-				distM.at<float>(i, min_loc.x ) = maxElimination;
-			}
-			for(int j=0;j<this->predState.cols;j++)
-			{
-				distM.at<float>( min_loc.y, j ) = maxElimination;
-			}
+				//let us eliminate the pair :
+				for(int i=0;i<this->inputState.cols;i++)
+				{
+					distM.at<float>(i, min_loc.x ) = maxElimination;
+				}
+				for(int j=0;j<this->predState.cols;j++)
+				{
+					distM.at<float>( min_loc.y, j ) = maxElimination;
+				}
 			
-			//let us record the pair :
-			this->pairs.at<float>(0,size) = min_loc.y;
-			this->pairs.at<float>(1,size) = min_loc.x;
-			size++;
+				//let us record the pair :
+				this->pairs.at<float>(0,size) = min_loc.y;
+				this->pairs.at<float>(1,size) = min_loc.x;
+				size++;
+			}
+			else
+			{
+				//the minimal distance has been reached, we no longer pair things together...
+				break;
+			}
 		}
+		
+		//let us remove those extra spots :
+		cv::Range r[2] = {cv::Range::all(), cv::Range(0,size)};
+		this->pairs = cv::Mat( this->pairs, r);
 		
 	}
 	
@@ -1026,6 +1058,10 @@ class RepulsionMapMetaControlLaw
 	*/
 
 };
+
+
+
+
 
 class OPUSim_ControlLaw
 {
