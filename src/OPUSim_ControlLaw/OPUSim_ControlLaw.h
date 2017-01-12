@@ -344,9 +344,16 @@ class MetaControlLaw
 		Deals with the parsing of the message in order to create the inputState with respect to obstacles seen by the Depth sensor :
 		Argument(s) :
 		- inputMsg : message delivered by OPUSim_RO... : 
-		Architecture of the message :
-		first column : nbrObject, 0
-		next columns : (x,y,z) of the visible objects : in the current robot frame.
+		ARCHITECTURE OF RESULT :
+		column1 : nbrRobotVisible thetatarget
+		next columns : radius theta of visible robot in target frame.
+		last column : radius 0  of reference robot in target frame....
+		
+		next : the same for the previous pictures..
+		
+		//Architecture of the message :
+		//first column : nbrObject, 0
+		//next columns : (x,y,z) of the visible objects : in the current robot frame.
 		*/
 		
 		//Let us set up the elapsed time :
@@ -361,15 +368,11 @@ class MetaControlLaw
 	
 		//TODO : change that line when we add the message from the obstacle sensor...
 		int nbrObjNearEnough = 0;
-		std::vector<bool> nearEnough(inputMsg.cols,false);
+		std::vector<bool> nearEnough(inputMsg.cols/2,false);
 		//beware : the first column is not a point...
-		for(int i=1;i<inputMsg.cols;i++)
+		for(int i=1;i<inputMsg.cols/2;i++)
 		{
-			float x = inputMsg.at<float>(0,i);
-			float y = inputMsg.at<float>(1,i);
-			float z = inputMsg.at<float>(2,i);
-			
-			float dist = sqrt(x*x*+z*z);
+			float dist = inputMsg.at<float>(0,i);
 			
 			if( dist < this->tresholdFarEnough)
 			{
@@ -397,13 +400,17 @@ class MetaControlLaw
 		this->inputState = cv::Mat::zeros( 5, this->nbrObj, CV_32F);
 		int icountState = 0;
 		
-		for(int i=1;i<=inputMsg.cols;i++)
+		for(int i=1;i<=inputMsg.cols/2;i++)
 		{
 			if( nearEnough[i] )
 			{
-				float x = inputMsg.at<float>(0,i);
-				float y = inputMsg.at<float>(1,i);
-				float z = inputMsg.at<float>(2,i);
+				float r = inputMsg.at<float>(0,i);
+				float theta = inputMsg.at<float>(1,i);
+
+				//frame is x<-x,y<-z,z<--y
+				float x = r*cos(theta);
+				float y = 0;
+				float z = r*sin(theta);
 	
 				float isTarget = 0.0f;
 				float isObstacle = 1.0f;
@@ -418,8 +425,6 @@ class MetaControlLaw
 			}
 		
 		}
-		
-		//std::cout << "INPUT STATE : " << this->inputState << std::endl;
 		
 		//Using only velocities... :
 		cv::vconcat( this->inputState, cv::Mat::zeros( cv::Size(this->nbrObj,3), CV_32F), this->inputState);
@@ -991,6 +996,11 @@ class MetaControlLaw
 		}
 		
 		//let us remove those extra spots :
+		if(size == 0)
+		{
+			size = 1;
+		}
+			
 		cv::Range r[2] = {cv::Range::all(), cv::Range(0,size)};
 		this->pairs = cv::Mat( this->pairs, r);
 		
@@ -1151,6 +1161,8 @@ class OPUSim_ControlLaw
 		
 		cv::Mat currentmsg;
     int nbrRobotVisible = 0;
+    float v = 0.0f;
+    float omega = 0.0f;
     
 		mutexRES.lock();
 		while(continuer)
@@ -1266,9 +1278,9 @@ class OPUSim_ControlLaw
 				
 				
 				//float v = Kgain*this->gain*this->kv*(f*cos(THETA) + r*g*sin(THETA));
-				float v = this->gain*this->kv*(f*cos(THETA) + r*g*sin(THETA));
+				v = this->gain*this->kv*(f*cos(THETA) + r*g*sin(THETA));
 				//float omega = Kgain*this->gain*this->kw*(r*g*cos(THETA) - f*sin(THETA));
-				float omega = this->gain*this->kw*(r*g*cos(THETA) - f*sin(THETA));
+				omega = this->gain*this->kw*(r*g*cos(THETA) - f*sin(THETA));
 				
 				
 				//----------------------------------------------------
@@ -1323,6 +1335,10 @@ class OPUSim_ControlLaw
 				//----------------------------------------------------
 				//UPDATE META Control Law :
 				//----------------------------------------------------
+				cv::Mat desiredControlInput = cv::Mat::zeros( 2,1, CV_32F);
+				desiredControlInput.at<float>(0,0) = v;
+				desiredControlInput.at<float>(1,0) = omega;
+				
 				//observe velocity :
 				cv::Mat odo = cv::Mat::zeros(2,1,CV_32F);
 				odo.at<float>(0,0) = -this->twistmsg.linear.x;
@@ -1362,7 +1378,7 @@ class OPUSim_ControlLaw
 			
 			if(this->verbose && goOn)
 			{ 
-				std::cout << " V x W : " << v << " x " << omega << " // r filtered x input : " << r << " x " << rinput << " // phi_i_i+1 : " << mintheta << std::endl;
+				std::cout << " V x W : " << v << " x " << omega << std::endl;
 			}
 			
 			

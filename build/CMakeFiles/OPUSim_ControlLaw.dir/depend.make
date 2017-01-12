@@ -8,7 +8,13 @@ CMakeFiles/OPUSim_ControlLaw.dir/src/mainOPUSim_ControlLaw.cpp.o: ../src/mainOPU
 CMakeFiles/OPUSim_ControlLaw.dir/src/mainOPUSim_ControlLaw.cpp.o: /opt/ros/indigo/include/XmlRpcDecl.h
 CMakeFiles/OPUSim_ControlLaw.dir/src/mainOPUSim_ControlLaw.cpp.o: /opt/ros/indigo/include/XmlRpcValue.h
 CMakeFiles/OPUSim_ControlLaw.dir/src/mainOPUSim_ControlLaw.cpp.o: /opt/ros/indigo/include/cv_bridge/cv_bridge.h
+CMakeFiles/OPUSim_ControlLaw.dir/src/mainOPUSim_ControlLaw.cpp.o: /opt/ros/indigo/include/geometry_msgs/Point.h
+CMakeFiles/OPUSim_ControlLaw.dir/src/mainOPUSim_ControlLaw.cpp.o: /opt/ros/indigo/include/geometry_msgs/Pose.h
+CMakeFiles/OPUSim_ControlLaw.dir/src/mainOPUSim_ControlLaw.cpp.o: /opt/ros/indigo/include/geometry_msgs/Pose2D.h
+CMakeFiles/OPUSim_ControlLaw.dir/src/mainOPUSim_ControlLaw.cpp.o: /opt/ros/indigo/include/geometry_msgs/PoseWithCovariance.h
+CMakeFiles/OPUSim_ControlLaw.dir/src/mainOPUSim_ControlLaw.cpp.o: /opt/ros/indigo/include/geometry_msgs/Quaternion.h
 CMakeFiles/OPUSim_ControlLaw.dir/src/mainOPUSim_ControlLaw.cpp.o: /opt/ros/indigo/include/geometry_msgs/Twist.h
+CMakeFiles/OPUSim_ControlLaw.dir/src/mainOPUSim_ControlLaw.cpp.o: /opt/ros/indigo/include/geometry_msgs/TwistWithCovariance.h
 CMakeFiles/OPUSim_ControlLaw.dir/src/mainOPUSim_ControlLaw.cpp.o: /opt/ros/indigo/include/geometry_msgs/Vector3.h
 CMakeFiles/OPUSim_ControlLaw.dir/src/mainOPUSim_ControlLaw.cpp.o: /opt/ros/indigo/include/image_transport/camera_publisher.h
 CMakeFiles/OPUSim_ControlLaw.dir/src/mainOPUSim_ControlLaw.cpp.o: /opt/ros/indigo/include/image_transport/camera_subscriber.h
@@ -19,6 +25,12 @@ CMakeFiles/OPUSim_ControlLaw.dir/src/mainOPUSim_ControlLaw.cpp.o: /opt/ros/indig
 CMakeFiles/OPUSim_ControlLaw.dir/src/mainOPUSim_ControlLaw.cpp.o: /opt/ros/indigo/include/image_transport/single_subscriber_publisher.h
 CMakeFiles/OPUSim_ControlLaw.dir/src/mainOPUSim_ControlLaw.cpp.o: /opt/ros/indigo/include/image_transport/subscriber.h
 CMakeFiles/OPUSim_ControlLaw.dir/src/mainOPUSim_ControlLaw.cpp.o: /opt/ros/indigo/include/image_transport/transport_hints.h
+CMakeFiles/OPUSim_ControlLaw.dir/src/mainOPUSim_ControlLaw.cpp.o: /opt/ros/indigo/include/nav_msgs/Odometry.h
+CMakeFiles/OPUSim_ControlLaw.dir/src/mainOPUSim_ControlLaw.cpp.o: /opt/ros/indigo/include/pcl_conversions/pcl_conversions.h
+CMakeFiles/OPUSim_ControlLaw.dir/src/mainOPUSim_ControlLaw.cpp.o: /opt/ros/indigo/include/pcl_msgs/ModelCoefficients.h
+CMakeFiles/OPUSim_ControlLaw.dir/src/mainOPUSim_ControlLaw.cpp.o: /opt/ros/indigo/include/pcl_msgs/PointIndices.h
+CMakeFiles/OPUSim_ControlLaw.dir/src/mainOPUSim_ControlLaw.cpp.o: /opt/ros/indigo/include/pcl_msgs/PolygonMesh.h
+CMakeFiles/OPUSim_ControlLaw.dir/src/mainOPUSim_ControlLaw.cpp.o: /opt/ros/indigo/include/pcl_msgs/Vertices.h
 CMakeFiles/OPUSim_ControlLaw.dir/src/mainOPUSim_ControlLaw.cpp.o: /opt/ros/indigo/include/ros/advertise_options.h
 CMakeFiles/OPUSim_ControlLaw.dir/src/mainOPUSim_ControlLaw.cpp.o: /opt/ros/indigo/include/ros/advertise_service_options.h
 CMakeFiles/OPUSim_ControlLaw.dir/src/mainOPUSim_ControlLaw.cpp.o: /opt/ros/indigo/include/ros/assert.h
@@ -76,6 +88,8 @@ CMakeFiles/OPUSim_ControlLaw.dir/src/mainOPUSim_ControlLaw.cpp.o: /opt/ros/indig
 CMakeFiles/OPUSim_ControlLaw.dir/src/mainOPUSim_ControlLaw.cpp.o: /opt/ros/indigo/include/sensor_msgs/CameraInfo.h
 CMakeFiles/OPUSim_ControlLaw.dir/src/mainOPUSim_ControlLaw.cpp.o: /opt/ros/indigo/include/sensor_msgs/CompressedImage.h
 CMakeFiles/OPUSim_ControlLaw.dir/src/mainOPUSim_ControlLaw.cpp.o: /opt/ros/indigo/include/sensor_msgs/Image.h
+CMakeFiles/OPUSim_ControlLaw.dir/src/mainOPUSim_ControlLaw.cpp.o: /opt/ros/indigo/include/sensor_msgs/PointCloud2.h
+CMakeFiles/OPUSim_ControlLaw.dir/src/mainOPUSim_ControlLaw.cpp.o: /opt/ros/indigo/include/sensor_msgs/PointField.h
 CMakeFiles/OPUSim_ControlLaw.dir/src/mainOPUSim_ControlLaw.cpp.o: /opt/ros/indigo/include/sensor_msgs/RegionOfInterest.h
 CMakeFiles/OPUSim_ControlLaw.dir/src/mainOPUSim_ControlLaw.cpp.o: /opt/ros/indigo/include/sensor_msgs/image_encodings.h
 CMakeFiles/OPUSim_ControlLaw.dir/src/mainOPUSim_ControlLaw.cpp.o: /opt/ros/indigo/include/std_msgs/Header.h
