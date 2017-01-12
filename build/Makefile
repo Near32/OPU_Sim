@@ -156,6 +156,19 @@ OPUSim_ControlLaw/fast:
 .PHONY : OPUSim_ControlLaw/fast
 
 #=============================================================================
+# Target rules for targets named OPUSim_Obstacles
+
+# Build rule for target.
+OPUSim_Obstacles: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 OPUSim_Obstacles
+.PHONY : OPUSim_Obstacles
+
+# fast build rule for target.
+OPUSim_Obstacles/fast:
+	$(MAKE) -f CMakeFiles/OPUSim_Obstacles.dir/build.make CMakeFiles/OPUSim_Obstacles.dir/build
+.PHONY : OPUSim_Obstacles/fast
+
+#=============================================================================
 # Target rules for targets named OPUSim_OmniView
 
 # Build rule for target.
@@ -491,6 +504,30 @@ src/mainOPUSim_ControlLaw.cpp.s:
 	$(MAKE) -f CMakeFiles/OPUSim_ControlLaw.dir/build.make CMakeFiles/OPUSim_ControlLaw.dir/src/mainOPUSim_ControlLaw.cpp.s
 .PHONY : src/mainOPUSim_ControlLaw.cpp.s
 
+src/mainOPUSim_Obstacles.o: src/mainOPUSim_Obstacles.cpp.o
+.PHONY : src/mainOPUSim_Obstacles.o
+
+# target to build an object file
+src/mainOPUSim_Obstacles.cpp.o:
+	$(MAKE) -f CMakeFiles/OPUSim_Obstacles.dir/build.make CMakeFiles/OPUSim_Obstacles.dir/src/mainOPUSim_Obstacles.cpp.o
+.PHONY : src/mainOPUSim_Obstacles.cpp.o
+
+src/mainOPUSim_Obstacles.i: src/mainOPUSim_Obstacles.cpp.i
+.PHONY : src/mainOPUSim_Obstacles.i
+
+# target to preprocess a source file
+src/mainOPUSim_Obstacles.cpp.i:
+	$(MAKE) -f CMakeFiles/OPUSim_Obstacles.dir/build.make CMakeFiles/OPUSim_Obstacles.dir/src/mainOPUSim_Obstacles.cpp.i
+.PHONY : src/mainOPUSim_Obstacles.cpp.i
+
+src/mainOPUSim_Obstacles.s: src/mainOPUSim_Obstacles.cpp.s
+.PHONY : src/mainOPUSim_Obstacles.s
+
+# target to generate assembly for a file
+src/mainOPUSim_Obstacles.cpp.s:
+	$(MAKE) -f CMakeFiles/OPUSim_Obstacles.dir/build.make CMakeFiles/OPUSim_Obstacles.dir/src/mainOPUSim_Obstacles.cpp.s
+.PHONY : src/mainOPUSim_Obstacles.cpp.s
+
 src/mainOPUSim_OmniView.o: src/mainOPUSim_OmniView.cpp.o
 .PHONY : src/mainOPUSim_OmniView.o
 
@@ -546,6 +583,7 @@ help:
 	@echo "... clean"
 	@echo "... depend"
 	@echo "... OPUSim_ControlLaw"
+	@echo "... OPUSim_Obstacles"
 	@echo "... OPUSim_OmniView"
 	@echo "... OPUSim_RelativeSwarmOdometry"
 	@echo "... ROSBUILD_genmsg_cpp"
@@ -579,6 +617,9 @@ help:
 	@echo "... src/mainOPUSim_ControlLaw.o"
 	@echo "... src/mainOPUSim_ControlLaw.i"
 	@echo "... src/mainOPUSim_ControlLaw.s"
+	@echo "... src/mainOPUSim_Obstacles.o"
+	@echo "... src/mainOPUSim_Obstacles.i"
+	@echo "... src/mainOPUSim_Obstacles.s"
 	@echo "... src/mainOPUSim_OmniView.o"
 	@echo "... src/mainOPUSim_OmniView.i"
 	@echo "... src/mainOPUSim_OmniView.s"

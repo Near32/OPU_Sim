@@ -1,4 +1,5 @@
 /home/kevin/rosbuild_ws/package_dir/OPUSim/build/CMakeFiles/OPUSim_ControlLaw.dir
+/home/kevin/rosbuild_ws/package_dir/OPUSim/build/CMakeFiles/OPUSim_Obstacles.dir
 /home/kevin/rosbuild_ws/package_dir/OPUSim/build/CMakeFiles/OPUSim_OmniView.dir
 /home/kevin/rosbuild_ws/package_dir/OPUSim/build/CMakeFiles/OPUSim_RelativeSwarmOdometry.dir
 /home/kevin/rosbuild_ws/package_dir/OPUSim/build/CMakeFiles/ROSBUILD_genmsg_cpp.dir

@@ -145,6 +145,7 @@ SET(CMAKE_MAKEFILE_PRODUCTS
 # Dependency information for all targets:
 SET(CMAKE_DEPEND_INFO_FILES
   "CMakeFiles/OPUSim_ControlLaw.dir/DependInfo.cmake"
+  "CMakeFiles/OPUSim_Obstacles.dir/DependInfo.cmake"
   "CMakeFiles/OPUSim_OmniView.dir/DependInfo.cmake"
   "CMakeFiles/OPUSim_RelativeSwarmOdometry.dir/DependInfo.cmake"
   "CMakeFiles/ROSBUILD_genmsg_cpp.dir/DependInfo.cmake"
