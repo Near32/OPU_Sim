@@ -1406,12 +1406,17 @@ class OPUSim_ControlLaw
 				this->metacl.observeOdometry( odo );
 				
 				
+				if( goOn)
+				{
 				//----------------------------------------------------
 				//----------------------------------------------------
 				//IDENTIFY COUPLING PAIR
 				//----------------------------------------------------
 				//----------------------------------------------------
 				//-- Angular position rearrangin in [0,2*PI] :
+				
+				//TODO : handle the state of robots and targets after filtering :
+				
 				nbrRobotVisible = currentmsg.at<float>(0,0);
 				THETA = currentmsg.at<float>(1,0);
 				//it is the current THETA of the robot in the target reference-focused frame...
@@ -1492,6 +1497,7 @@ class OPUSim_ControlLaw
 				//float omega = Kgain*this->gain*this->kw*(r*g*cos(THETA) - f*sin(THETA));
 				omega = this->gain*this->kw*(r*g*cos(THETA) - f*sin(THETA));
 				
+				}
 				
 				//----------------------------------------------------
 				//COMPUTE META Control Law :
