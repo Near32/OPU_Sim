@@ -1,0 +1,40 @@
+<?xml version='1.0'?>
+    <sdf version='1.4'>
+      
+      <model name="obstacle_cylinder_model">
+        
+        <static>false</static>
+        
+        
+        <link name='obstacle'>
+          <pose>0 0 0 0 0 0</pose>
+          
+          <collision name='obstacle_collision'>
+            <geometry>
+              <box>
+                <size>.2 .2 .3</size>
+              </box>
+            </geometry>
+          </collision>
+
+          <visual name='obstacle_visual'>
+            <geometry>
+              <box>
+                <size>.2 .2 .3</size>
+              </box>
+            </geometry>
+            
+            <material>
+							<ambient>0 1 0 1</ambient>
+							<diffuse>0 1 0 1</diffuse>
+							<specular>0.1 0.1 0.1 1</specular>
+							<emissive>0 0 0 0</emissive>
+						</material>
+						
+          </visual>
+      	
+      	</link>
+      
+      </model>
+    
+    </sdf>
