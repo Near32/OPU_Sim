@@ -238,10 +238,6 @@ class MetaControlLaw
 	
 	cv::Mat state;
 	cv::Mat predState;
-	
-	cv::Mat inputObsState;
-	cv::Mat inputRobotState;
-	
 	cv::Mat inputState;
 	cv::Mat newState;
 	
@@ -280,7 +276,7 @@ class MetaControlLaw
 	
 	public :
 	
-	MetaControlLaw(const float& tresholdDist_ = 0.75f, const float& tresholdFarEnough_ = 2.0f, const float& tresholdDistPair_ = 0.5f) : nbrObj(0), lastClock( clock() ), needToOptimize(false), tresholdDist(tresholdDist_),currentOdometry(cv::Mat::zeros(2,1,CV_32F)), pnh(NULL), pairingToDo(false), tresholdFarEnough(tresholdFarEnough_), tresholdDistPair(tresholdDistPair_)
+	MetaControlLaw(const float& tresholdDist_ = 1.0f, const float& tresholdFarEnough_ = 5.0f, const float& tresholdDistPair_ = 0.5f) : nbrObj(0), lastClock( clock() ), needToOptimize(false), tresholdDist(tresholdDist_),currentOdometry(cv::Mat::zeros(2,1,CV_32F)), pnh(NULL), pairingToDo(false), tresholdFarEnough(tresholdFarEnough_), tresholdDistPair(tresholdDistPair_)
 	{
 		this->nbrAngularIntervals = 8;
 		this->angularIntervals = cv::Mat::zeros( this->nbrAngularIntervals, 2, CV_32F);
@@ -361,11 +357,8 @@ class MetaControlLaw
 		*/
 		
 		//Let us set up the elapsed time :
-		if( !this->pairingToDo)
-		{
-			this->elapsedTime = float( clock() - this->lastClock) / CLOCKS_PER_SEC ;
-			this->lastClock = clock();
-		}
+		this->elapsedTime = float( clock() - this->lastClock) / CLOCKS_PER_SEC ;
+		this->lastClock = clock();
 		
 		bool needToInit = false;
 		if(this->nbrObj == 0)
@@ -392,6 +385,7 @@ class MetaControlLaw
 	
 		if( this->nbrObj == 0)
 		{
+			this->needToOptimize = false;
 			return ;
 		}
 		else
@@ -403,7 +397,7 @@ class MetaControlLaw
 		/*
 		let us go on : we just have to parse the message and create the inputState :
 		*/
-		this->inputRobotState = cv::Mat::zeros( 5, this->nbrObj, CV_32F);
+		this->inputState = cv::Mat::zeros( 5, this->nbrObj, CV_32F);
 		int icountState = 0;
 		
 		for(int i=1;i<=inputMsg.cols/2;i++)
@@ -421,11 +415,11 @@ class MetaControlLaw
 				float isTarget = 0.0f;
 				float isObstacle = 1.0f;
 	
-				this->inputRobotState.at<float>(0,icountState) = x;
-				this->inputRobotState.at<float>(1,icountState) = y;
-				this->inputRobotState.at<float>(2,icountState) = z;
-				this->inputRobotState.at<float>(3,icountState) = isTarget;
-				this->inputRobotState.at<float>(4,icountState) = isObstacle;
+				this->inputState.at<float>(0,icountState) = x;
+				this->inputState.at<float>(1,icountState) = y;
+				this->inputState.at<float>(2,icountState) = z;
+				this->inputState.at<float>(3,icountState) = isTarget;
+				this->inputState.at<float>(4,icountState) = isObstacle;
 				
 				icountState++;
 			}
@@ -433,18 +427,9 @@ class MetaControlLaw
 		}
 		
 		//Using only velocities... :
-		cv::vconcat( this->inputRobotState, cv::Mat::zeros( cv::Size(this->nbrObj,3), CV_32F), this->inputRobotState);
+		cv::vconcat( this->inputState, cv::Mat::zeros( cv::Size(this->nbrObj,3), CV_32F), this->inputState);
 		//Using velocities and accelerations ... :
 		//cv::vconcat( this->inputState, cv::Mat::zeros( cv::Size(this->nbrObj,6), CV_32F), this->inputState);
-		
-		if( this->pairingToDo)
-		{
-			cv::hconcat(this->inputState, this->inputRobotState, this->inputState);
-		}
-		else
-		{
-			this->inputRobotState.copyTo( this->inputState);
-		}
 		
 		if(needToInit)
 		{
@@ -457,121 +442,6 @@ class MetaControlLaw
 		
 	}
 	
-	
-	void observationObs( const cv::Mat& inputMsg)
-	{
-		/*
-		Deals with the parsing of the message in order to create the inputState with respect to obstacles seen by the sensor :
-		Argument(s) :
-		- inputMsg : message delivered by OPUSim_Obstacles... : 
-		ARCHITECTURE OF RESULT :
-		column1 : nbrRobotVisible 0
-		next columns : radius theta of visible robot in target frame.
-		next : the same for the previous pictures..
-		*/
-		
-		if( inputMsg.at<float>(0,0) == 0)
-		{
-			return;
-		}
-		
-		//Let us set up the elapsed time :
-		if( !this->pairingToDo)
-		{
-			this->elapsedTime = float( clock() - this->lastClock) / CLOCKS_PER_SEC ;
-			this->lastClock = clock();
-		}
-		
-		bool needToInit = false;
-		if(this->nbrObj == 0)
-		{
-			needToInit = true;
-		}
-	
-		//TODO : change that line when we add the message from the obstacle sensor...
-		int nbrObjNearEnough = 0;
-		std::vector<bool> nearEnough(inputMsg.cols/2,false);
-		//beware : the first column is not a point...
-		for(int i=1;i<inputMsg.cols/2;i++)
-		{
-			float dist = inputMsg.at<float>(0,i);
-			
-			if( dist < this->tresholdFarEnough)
-			{
-				nearEnough[i] = true;
-				nbrObjNearEnough++;
-			}
-		}
-		
-		this->nbrObj = nbrObjNearEnough;
-	
-		if( this->nbrObj == 0)
-		{
-			return ;
-		}
-		else
-		{
-			this->needToOptimize = true;
-		}
-		
-		
-		/*
-		let us go on : we just have to parse the message and create the inputState :
-		*/
-		this->inputObsState = cv::Mat::zeros( 5, this->nbrObj, CV_32F);
-		int icountState = 0;
-		
-		for(int i=1;i<=inputMsg.cols/2;i++)
-		{
-			if( nearEnough[i] )
-			{
-				float r = inputMsg.at<float>(0,i);
-				float theta = inputMsg.at<float>(1,i);
-
-				//frame is x<-x,y<-z,z<--y
-				float x = r*cos(theta);
-				float y = 0;
-				float z = r*sin(theta);
-	
-				float isTarget = 0.0f;
-				float isObstacle = 1.0f;
-	
-				this->inputObsState.at<float>(0,icountState) = x;
-				this->inputObsState.at<float>(1,icountState) = y;
-				this->inputObsState.at<float>(2,icountState) = z;
-				this->inputObsState.at<float>(3,icountState) = isTarget;
-				this->inputObsState.at<float>(4,icountState) = isObstacle;
-				
-				icountState++;
-			}
-		
-		}
-		
-		//Using only velocities... :
-		cv::vconcat( this->inputObsState, cv::Mat::zeros( cv::Size(this->nbrObj,3), CV_32F), this->inputObsState);
-		//Using velocities and accelerations ... :
-		//cv::vconcat( this->inputState, cv::Mat::zeros( cv::Size(this->nbrObj,6), CV_32F), this->inputState);
-		
-		if( this->pairingToDo)
-		{
-			cv::hconcat( this->inputState, this->inputObsState, this->inputState);			
-		}
-		else
-		{
-			this->inputObsState.copyTo(this->inputState);
-		}
-		
-		
-		if(needToInit)
-		{
-			this->state = this->inputState;
-			this->predState = this->inputState;
-			this->newState = this->inputState;
-		}
-		
-		this->pairingToDo = true;
-		
-	}
 	
 	
 	void observationDepthObs( const cv::Mat& inputMsg)
@@ -1164,7 +1034,6 @@ class OPUSim_ControlLaw
 	bool continuer;
 	
 	std::vector<cv::Mat> frames;
-	std::vector<cv::Mat> obstacles;
 	std::thread* t;
 	
 	float R;
@@ -1191,7 +1060,6 @@ class OPUSim_ControlLaw
 	image_transport::ImageTransport* it;
 	ros::Publisher twistpub;
 	image_transport::Subscriber img_sub;
-	image_transport::Subscriber obs_sub;
 	
 	int robot_number;
 	geometry_msgs::Twist twistmsg;
@@ -1206,7 +1074,7 @@ class OPUSim_ControlLaw
 	//------------------------------
 	
 	
-	OPUSim_ControlLaw(const int& robot_number_, const bool& emergencyBreak_ = false, const bool& verbose_ = false, const float& gain_=4.0f, const float& R_=3.0f, const float& a_=1.0f, const float& epsilon_=10.0f, const float& kv_=0.1f, const float& kw_=0.2f, const float& Omega_=1.0f, const float& tresholdDistAccount = 0.75f, const float& tresholdDistFarEnough = 2.0f, const float& tresholdDistPair = 0.5f) : continuer(true), robot_number(robot_number_), R(R_), a(a_), epsilon(epsilon_), kv(kv_), kw(kw_), Omega(Omega_), gain(gain_), THETA(0.0f), r(0.0f), emergencyBreak(emergencyBreak_), verbose(verbose_),tau(10.0f)
+	OPUSim_ControlLaw(const int& robot_number_, const bool& emergencyBreak_ = false, const bool& verbose_ = false, const float& gain_=4.0f, const float& R_=3.0f, const float& a_=1.0f, const float& epsilon_=10.0f, const float& kv_=0.1f, const float& kw_=0.2f, const float& Omega_=1.0f, const float& tresholdDistAccount = 1.0f, const float& tresholdDistFarEnough = 5.0f, const float& tresholdDistPair = 0.5f) : continuer(true), robot_number(robot_number_), R(R_), a(a_), epsilon(epsilon_), kv(kv_), kw(kw_), Omega(Omega_), gain(gain_), THETA(0.0f), r(0.0f), emergencyBreak(emergencyBreak_), verbose(verbose_),tau(10.0f)
 	{			
 		it = new image_transport::ImageTransport(nh);
 		
@@ -1218,11 +1086,9 @@ class OPUSim_ControlLaw
 		std::string path( "/robot_model_teleop_"+std::to_string(robot_number)+"/");
 		//std::string path( "/robot_model_teleop/");
 		std::string pathSUB(path+"RSO");
-		std::string pathSUB_OBS(path+"OBSTACLES");
 		std::string pathPUB(path+"cmd_vel");
 		
 		img_sub = it->subscribe( pathSUB.c_str(), 1, &OPUSim_ControlLaw::callback,this);
-		obs_sub = it->subscribe( pathSUB_OBS.c_str(), 1, &OPUSim_ControlLaw::callbackOBS,this);
 		twistpub = nh.advertise<geometry_msgs::Twist>( pathPUB.c_str(), 10);
 		
 		
@@ -1285,35 +1151,6 @@ class OPUSim_ControlLaw
 		mutexRES.unlock();
 	}
 	
-	void callbackOBS(const sensor_msgs::ImageConstPtr& original_image)
-	{
-		cv_bridge::CvImagePtr cv_ptr;
-	
-		try
-		{
-			//cv_ptr = cv_bridge::toCvCopy(original_image,enc::BGR8);
-			cv_ptr = cv_bridge::toCvCopy(original_image,enc::TYPE_32FC1);
-		}
-		catch( cv_bridge::Exception e)
-		{
-			ROS_ERROR("OPUSim_ControlLaw::::cv_bridge exception : %s", e.what());
-			return ;
-		}
-		//------------------------------------------------
-		//		Stack of Frames
-		//-----------------------------------------------
-		cv::Mat obs;
-		cv_ptr->image.copyTo( obs);
-    
-		//------------------------------
-		//------------------------------
-		
-		
-		mutexRES.lock();
-		obstacles.insert(obstacles.begin(), obs);	
-		mutexRES.unlock();
-	}
-	
 	
 	
 	
@@ -1323,7 +1160,6 @@ class OPUSim_ControlLaw
 		int count_info = 0;
 		
 		cv::Mat currentmsg;
-		cv::Mat currentObsmsg;
     int nbrRobotVisible = 0;
     float v = 0.0f;
     float omega = 0.0f;
@@ -1337,7 +1173,6 @@ class OPUSim_ControlLaw
 			
 			
 			bool goOn = true;
-			bool goOnObs = true;
 			
 			if(frames.size() >= 1)
 			{
@@ -1348,63 +1183,18 @@ class OPUSim_ControlLaw
 				goOn = false;
 			}
 			
-			if(obstacles.size() >= 1)
-			{
-				goOnObs = true;
-			}
-			else
-			{
-				goOnObs = false;
-			}
-			
-			if(goOn || goOnObs)
+			if(goOn)
 			{
 				
 				mutexRES.lock();
-				if(goOn)
-				{
-					frames[0].copyTo(currentmsg);
-					frames.clear();
-				}
-				
-				if(goOnObs)
-				{
-					obstacles[0].copyTo(currentObsmsg);
-					obstacles.clear();
-				}
-				
+				frames[0].copyTo(currentmsg);
+				frames.clear();
 				mutexRES.unlock();
 				
 				if(this->verbose)
 				{
-					if(goOn)
-					{
-						std::cout << " CURRENT MSG FROM RSO : " << currentmsg << std::endl;
-					}
-					
-					if(goOnObs)
-					{
-						std::cout << " CURRENT MSG FROM OBS : " << currentObsmsg << std::endl;
-					}
+					std::cout << " CURRENT MSG FROM RSO : " << currentmsg << std::endl;
 				}
-				
-				if(goOn)
-				{
-					this->metacl.observation(currentmsg);
-				}
-				
-				if(goOnObs)
-				{
-					metacl.observationObs(currentObsmsg);
-				}
-				
-				//observe velocity :
-				cv::Mat odo = cv::Mat::zeros(2,1,CV_32F);
-				odo.at<float>(0,0) = -this->twistmsg.linear.x;
-				odo.at<float>(1,0) = -this->twistmsg.angular.z;
-				
-				this->metacl.observeOdometry( odo );
-				
 				
 				//----------------------------------------------------
 				//----------------------------------------------------
@@ -1500,6 +1290,24 @@ class OPUSim_ControlLaw
 				desiredControlInput.at<float>(0,0) = v;
 				desiredControlInput.at<float>(1,0) = omega;
 				
+				if(goOn)
+				{
+					this->metacl.observation(currentmsg);
+				}
+				
+				/*if(goOnDepthObs)
+				{
+					//observe PointCloud :
+					metacl.observationDepthObs(currentDepthObsMsg);
+				}
+				*/
+				
+				//observe velocity :
+				cv::Mat odo = cv::Mat::zeros(2,1,CV_32F);
+				odo.at<float>(0,0) = -this->twistmsg.linear.x;
+				odo.at<float>(1,0) = -this->twistmsg.angular.z;
+				
+				this->metacl.observeOdometry( odo );
 				
 				//filtering that prevent obstacles to become hurdles to the correct orientation of the robot...
 				bool optimize = true;
