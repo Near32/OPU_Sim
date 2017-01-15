@@ -573,7 +573,7 @@ class OPUSim_RelativeSwarmOdometry
 					else
 					{
 						std::cout << " NO TARGET..." << std::endl;
-						this->pushing = false;
+						this->pushing = true;
 						
 						//THERE IS NO TARGET VISIBLE : Let the robot assume it is at the correct distance :
 						targetpolar = cv::Mat::zeros( 2, 1, CV_32F);

@@ -279,14 +279,14 @@
 					<far>100</far>
 				</clip>
 				
-				<!--
+				
 				<lens>
 					<type>gnomonical</type>
 					<scale_to_hfov>true</scale_to_hfov>
 					<cutoff_angle>1.57</cutoff_angle>
 					<env_texture_size>512</env_texture_size>
 				</lens>
-				-->
+				
 			</camera>
 
 			<plugin name="camera_controller" filename="libgazebo_ros_camera.so">
@@ -384,14 +384,14 @@
 					<far>100</far>
 				</clip>
 				
-				<!--
+				
 				<lens>
 					<type>gnomonical</type>
 					<scale_to_hfov>true</scale_to_hfov>
 					<cutoff_angle>1.57</cutoff_angle>
 					<env_texture_size>512</env_texture_size>
 				</lens>
-				-->
+				
 			</camera>
 
 			<plugin name="camera_controller" filename="libgazebo_ros_camera.so">
@@ -487,14 +487,14 @@
 					<far>100</far>
 				</clip>
 				
-				<!--
+				
 				<lens>
 					<type>gnomonical</type>
 					<scale_to_hfov>true</scale_to_hfov>
 					<cutoff_angle>1.57</cutoff_angle>
 					<env_texture_size>512</env_texture_size>
 				</lens>
-				-->
+				
 			</camera>
 
 			<plugin name="camera_controller" filename="libgazebo_ros_camera.so">
@@ -587,14 +587,14 @@
 					<far>100</far>
 				</clip>
 				
-				<!--
+				
 				<lens>
 					<type>gnomonical</type>
 					<scale_to_hfov>true</scale_to_hfov>
 					<cutoff_angle>1.57</cutoff_angle>
 					<env_texture_size>512</env_texture_size>
 				</lens>
-				-->
+				
 			</camera>
 
 			<plugin name="camera_controller" filename="libgazebo_ros_camera.so">
