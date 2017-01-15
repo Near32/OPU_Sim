@@ -6,7 +6,7 @@
 
 #IncludeRegexTransform: 
 
-/home/kevin/rosbuild_ws/package_dir/OPUSim/src/./OPUSim_OmniView/OPUSim_OmniView.h
+/home/kevin/rosbuild_ws/sandbox/OPUSim/src/./OPUSim_OmniView/OPUSim_OmniView.h
 iostream
 -
 string
@@ -32,9 +32,9 @@ opencv2/highgui/highgui.hpp
 opencv2/features2d/features2d.hpp
 -
 
-/home/kevin/rosbuild_ws/package_dir/OPUSim/src/mainOPUSim_OmniView.cpp
+/home/kevin/rosbuild_ws/sandbox/OPUSim/src/mainOPUSim_OmniView.cpp
 ./OPUSim_OmniView/OPUSim_OmniView.h
-/home/kevin/rosbuild_ws/package_dir/OPUSim/src/./OPUSim_OmniView/OPUSim_OmniView.h
+/home/kevin/rosbuild_ws/sandbox/OPUSim/src/./OPUSim_OmniView/OPUSim_OmniView.h
 
 /opt/ros/indigo/include/XmlRpcDecl.h
 ros/macros.h

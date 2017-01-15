@@ -7,7 +7,6 @@
 # new environment variables
 
 # modified environment variables
-export CMAKE_PREFIX_PATH="/home/kevin/rosbuild_ws/package_dir/OPUSim/build/devel:$CMAKE_PREFIX_PATH"
-export ROSLISP_PACKAGE_DIRECTORIES="/home/kevin/rosbuild_ws/package_dir/OPUSim/build/devel/share/common-lisp"
-export ROS_PACKAGE_PATH="/home/kevin/rosbuild_ws/package_dir/OPUSim:/opt/ros/indigo/share:/opt/ros/indigo/stacks"
-export RTT_COMPONENT_PATH="/home/kevin/rosbuild_ws/package_dir/OPUSim/build/devel/lib/orocos:$RTT_COMPONENT_PATH"
+export CMAKE_PREFIX_PATH="/home/kevin/rosbuild_ws/sandbox/OPUSim/build/devel:$CMAKE_PREFIX_PATH"
+export ROSLISP_PACKAGE_DIRECTORIES="/home/kevin/rosbuild_ws/sandbox/OPUSim/build/devel/share/common-lisp"
+export ROS_PACKAGE_PATH="/home/kevin/rosbuild_ws/sandbox/OPUSim:/opt/ros/indigo/share:/opt/ros/indigo/stacks"

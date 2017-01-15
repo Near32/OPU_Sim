@@ -1,2 +1,2 @@
 - setup-file:
-    local-name: /home/kevin/rosbuild_ws/package_dir/OPUSim/build/devel/setup.sh
+    local-name: /home/kevin/rosbuild_ws/sandbox/OPUSim/build/devel/setup.sh
