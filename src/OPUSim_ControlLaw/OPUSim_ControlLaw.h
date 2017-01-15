@@ -280,7 +280,7 @@ class MetaControlLaw
 	
 	public :
 	
-	MetaControlLaw(const float& tresholdDist_ = 0.75f, const float& tresholdFarEnough_ = 2.0f, const float& tresholdDistPair_ = 0.5f) : nbrObj(0), lastClock( clock() ), needToOptimize(false), tresholdDist(tresholdDist_),currentOdometry(cv::Mat::zeros(2,1,CV_32F)), pnh(NULL), pairingToDo(false), tresholdFarEnough(tresholdFarEnough_), tresholdDistPair(tresholdDistPair_)
+	MetaControlLaw(const float& tresholdDist_ = 0.75f, const float& tresholdFarEnough_ = 2.0f, const float& tresholdDistPair_ = 1.0f) : nbrObj(0), lastClock( clock() ), needToOptimize(false), tresholdDist(tresholdDist_),currentOdometry(cv::Mat::zeros(2,1,CV_32F)), pnh(NULL), pairingToDo(false), tresholdFarEnough(tresholdFarEnough_), tresholdDistPair(tresholdDistPair_)
 	{
 		this->nbrAngularIntervals = 8;
 		this->angularIntervals = cv::Mat::zeros( this->nbrAngularIntervals, 2, CV_32F);
@@ -304,15 +304,15 @@ class MetaControlLaw
 		this->angularIntervals.at<float>(1,0) = 3*PI/12;
 		
 		this->Interval2Bias = cv::Mat::zeros( this->nbrAngularIntervals, 1, CV_32F);
-		float testBias = 2*PI/24;
-		this->Interval2Bias.at<float>(0,0) = -PI/12-testBias;
-		this->Interval2Bias.at<float>(0,1) = -PI/12-testBias;
-		this->Interval2Bias.at<float>(0,2) = -2*PI/12-testBias;
-		this->Interval2Bias.at<float>(0,3) = -3*PI/12-testBias;
-		this->Interval2Bias.at<float>(0,4) = 3*PI/12+testBias;
-		this->Interval2Bias.at<float>(0,5) = 2*PI/12+testBias;
-		this->Interval2Bias.at<float>(0,6) = PI/12+testBias;
-		this->Interval2Bias.at<float>(0,7) = PI/12+testBias;
+		float testBias = 0.0f;
+		this->Interval2Bias.at<float>(0,0) = PI/12-testBias;
+		this->Interval2Bias.at<float>(0,1) = PI/12-testBias;
+		this->Interval2Bias.at<float>(0,2) = 2*PI/12-testBias;
+		this->Interval2Bias.at<float>(0,3) = 3*PI/12-testBias;
+		this->Interval2Bias.at<float>(0,4) = -3*PI/12+testBias;
+		this->Interval2Bias.at<float>(0,5) = -2*PI/12+testBias;
+		this->Interval2Bias.at<float>(0,6) = -PI/12+testBias;
+		this->Interval2Bias.at<float>(0,7) = -PI/12+testBias;
 	}
 	
 	~MetaControlLaw()
@@ -1017,6 +1017,7 @@ class MetaControlLaw
 			simple :: tailoredVelocity : vector (v,w) optimized to fulfill our objectives. 
 			complex :: tailoredAcceleration maybe... //TODO
 		*/
+		bool slamlike = true;
 		
 		if(this->needToOptimize)
 		{
@@ -1024,9 +1025,12 @@ class MetaControlLaw
 		}
 		
 		//Let us compute the predicted state :
-		this->predictionSimple();
-		
-		if(this->pairingToDo)
+		if(slamlike)
+		{
+			this->predictionSimple();
+		}
+				
+		if(slamlike && this->pairingToDo)
 		{
 			//Let us pair those observations with the predicted state :
 			this->pairing();
@@ -1034,6 +1038,12 @@ class MetaControlLaw
 			
 			//Let us update the newState from the pairs and the inputState and predState:
 			this->updateState();
+		}
+		else if(this->pairingToDo)
+		{
+			this->predState = this->inputState;
+			this->newState = this->predState;
+			this->state = this->newState;
 		}
 		else
 		{
@@ -1044,7 +1054,10 @@ class MetaControlLaw
 		
 		
 		//debug : publish map :
-		this->publishMAP();
+		if(slamlike)
+		{
+			this->publishMAP();
+		}
 		
 		//Let us run the optimization problem :
 		this->optimizeSimple( desiredControlInput);
@@ -1206,7 +1219,7 @@ class OPUSim_ControlLaw
 	//------------------------------
 	
 	
-	OPUSim_ControlLaw(const int& robot_number_, const bool& emergencyBreak_ = false, const bool& verbose_ = false, const float& gain_=4.0f, const float& R_=3.0f, const float& a_=1.0f, const float& epsilon_=10.0f, const float& kv_=0.1f, const float& kw_=0.2f, const float& Omega_=1.0f, const float& tresholdDistAccount = 0.75f, const float& tresholdDistFarEnough = 2.0f, const float& tresholdDistPair = 0.5f) : continuer(true), robot_number(robot_number_), R(R_), a(a_), epsilon(epsilon_), kv(kv_), kw(kw_), Omega(Omega_), gain(gain_), THETA(0.0f), r(0.0f), emergencyBreak(emergencyBreak_), verbose(verbose_),tau(10.0f)
+	OPUSim_ControlLaw(const int& robot_number_, const bool& emergencyBreak_ = false, const bool& verbose_ = false, const float& gain_=4.0f, const float& R_=3.0f, const float& a_=1.0f, const float& epsilon_=10.0f, const float& kv_=0.1f, const float& kw_=0.2f, const float& Omega_=1.0f, const float& tresholdDistAccount = 2.0f, const float& tresholdDistFarEnough = 3.0f, const float& tresholdDistPair = 1.0f) : continuer(true), robot_number(robot_number_), R(R_), a(a_), epsilon(epsilon_), kv(kv_), kw(kw_), Omega(Omega_), gain(gain_), THETA(0.0f), r(0.0f), emergencyBreak(emergencyBreak_), verbose(verbose_),tau(10.0f)
 	{			
 		it = new image_transport::ImageTransport(nh);
 		
@@ -1402,8 +1415,8 @@ class OPUSim_ControlLaw
 				
 				//observe velocity :
 				cv::Mat odo = cv::Mat::zeros(2,1,CV_32F);
-				odo.at<float>(0,0) = -this->twistmsg.linear.x;
-				odo.at<float>(1,0) = -this->twistmsg.angular.z;
+				odo.at<float>(0,0) = -v;
+				odo.at<float>(1,0) = -omega;
 				
 				this->metacl.observeOdometry( odo );
 				
@@ -1541,8 +1554,8 @@ class OPUSim_ControlLaw
 				
 				//observe velocity :
 				cv::Mat odo = cv::Mat::zeros(2,1,CV_32F);
-				odo.at<float>(0,0) = -this->twistmsg.linear.x;
-				odo.at<float>(1,0) = -this->twistmsg.angular.z;
+				odo.at<float>(0,0) = -v;
+				odo.at<float>(1,0) = -omega;
 				
 				this->metacl.observeOdometry( odo );
 				
@@ -1576,7 +1589,7 @@ class OPUSim_ControlLaw
 			twistmsg.angular.y = 0.0f;
 			twistmsg.angular.z = -omega;
 			
-			if(this->verbose && goOn)
+			if(this->verbose)
 			{ 
 				std::cout << " V x W : " << v << " x " << omega << std::endl;
 			}
