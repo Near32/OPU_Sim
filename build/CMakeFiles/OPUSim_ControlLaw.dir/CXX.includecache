@@ -6,7 +6,7 @@
 
 #IncludeRegexTransform: 
 
-/home/kevin/rosbuild_ws/package_dir/OPUSim/src/./Mat/Mat.h
+/home/kevin/rosbuild_ws/sandbox/OPUSim/src/./Mat/Mat.h
 iostream
 -
 limits
@@ -22,7 +22,7 @@ assert.h
 opencv2/opencv.hpp
 -
 
-/home/kevin/rosbuild_ws/package_dir/OPUSim/src/./OPUSim_ControlLaw/OPUSim_ControlLaw.h
+/home/kevin/rosbuild_ws/sandbox/OPUSim/src/./OPUSim_ControlLaw/OPUSim_ControlLaw.h
 iostream
 -
 string
@@ -70,15 +70,15 @@ pcl/point_types.h
 sensor_msgs/PointCloud2.h
 -
 ../PIDController/PIDControllerM.h
-/home/kevin/rosbuild_ws/package_dir/OPUSim/src/./PIDController/PIDControllerM.h
+/home/kevin/rosbuild_ws/sandbox/OPUSim/src/./PIDController/PIDControllerM.h
 
-/home/kevin/rosbuild_ws/package_dir/OPUSim/src/./PIDController/PIDControllerM.h
+/home/kevin/rosbuild_ws/sandbox/OPUSim/src/./PIDController/PIDControllerM.h
 ../Mat/Mat.h
-/home/kevin/rosbuild_ws/package_dir/OPUSim/src/./Mat/Mat.h
+/home/kevin/rosbuild_ws/sandbox/OPUSim/src/./Mat/Mat.h
 
-/home/kevin/rosbuild_ws/package_dir/OPUSim/src/mainOPUSim_ControlLaw.cpp
+/home/kevin/rosbuild_ws/sandbox/OPUSim/src/mainOPUSim_ControlLaw.cpp
 ./OPUSim_ControlLaw/OPUSim_ControlLaw.h
-/home/kevin/rosbuild_ws/package_dir/OPUSim/src/./OPUSim_ControlLaw/OPUSim_ControlLaw.h
+/home/kevin/rosbuild_ws/sandbox/OPUSim/src/./OPUSim_ControlLaw/OPUSim_ControlLaw.h
 
 /opt/ros/indigo/include/XmlRpcDecl.h
 ros/macros.h

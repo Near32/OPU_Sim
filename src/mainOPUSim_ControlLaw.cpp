@@ -24,7 +24,7 @@ int main(int argc, char* argv[])
 		verbose = (atoi(argv[3])==1?true:false);
 	}
 	
-	float gain_=4.0f;
+	float gain_=1.0f;
 	if(argc>4)
 	{
 		gain_ = atof(argv[4]);

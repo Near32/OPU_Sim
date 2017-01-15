@@ -34,14 +34,11 @@ RM = /usr/bin/cmake -E remove -f
 # Escaping for special characters.
 EQUALS = =
 
-# The program to use to edit the cache.
-CMAKE_EDIT_COMMAND = /usr/bin/ccmake
-
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/kevin/rosbuild_ws/package_dir/OPUSim
+CMAKE_SOURCE_DIR = /home/kevin/rosbuild_ws/sandbox/OPUSim
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/kevin/rosbuild_ws/package_dir/OPUSim/build
+CMAKE_BINARY_DIR = /home/kevin/rosbuild_ws/sandbox/OPUSim/build
 
 # Utility rule file for test-future.
 
@@ -63,6 +60,6 @@ CMakeFiles/test-future.dir/clean:
 .PHONY : CMakeFiles/test-future.dir/clean
 
 CMakeFiles/test-future.dir/depend:
-	cd /home/kevin/rosbuild_ws/package_dir/OPUSim/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/kevin/rosbuild_ws/package_dir/OPUSim /home/kevin/rosbuild_ws/package_dir/OPUSim /home/kevin/rosbuild_ws/package_dir/OPUSim/build /home/kevin/rosbuild_ws/package_dir/OPUSim/build /home/kevin/rosbuild_ws/package_dir/OPUSim/build/CMakeFiles/test-future.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/kevin/rosbuild_ws/sandbox/OPUSim/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/kevin/rosbuild_ws/sandbox/OPUSim /home/kevin/rosbuild_ws/sandbox/OPUSim /home/kevin/rosbuild_ws/sandbox/OPUSim/build /home/kevin/rosbuild_ws/sandbox/OPUSim/build /home/kevin/rosbuild_ws/sandbox/OPUSim/build/CMakeFiles/test-future.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/test-future.dir/depend
 

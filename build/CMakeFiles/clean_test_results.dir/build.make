@@ -34,14 +34,11 @@ RM = /usr/bin/cmake -E remove -f
 # Escaping for special characters.
 EQUALS = =
 
-# The program to use to edit the cache.
-CMAKE_EDIT_COMMAND = /usr/bin/ccmake
-
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/kevin/rosbuild_ws/package_dir/OPUSim
+CMAKE_SOURCE_DIR = /home/kevin/rosbuild_ws/sandbox/OPUSim
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/kevin/rosbuild_ws/package_dir/OPUSim/build
+CMAKE_BINARY_DIR = /home/kevin/rosbuild_ws/sandbox/OPUSim/build
 
 # Utility rule file for clean_test_results.
 
@@ -49,7 +46,7 @@ CMAKE_BINARY_DIR = /home/kevin/rosbuild_ws/package_dir/OPUSim/build
 include CMakeFiles/clean_test_results.dir/progress.make
 
 CMakeFiles/clean_test_results:
-	/usr/bin/python /opt/ros/indigo/share/catkin/cmake/test/remove_test_results.py /home/kevin/rosbuild_ws/package_dir/OPUSim/build/test_results
+	/usr/bin/python /opt/ros/indigo/share/catkin/cmake/test/remove_test_results.py /home/kevin/rosbuild_ws/sandbox/OPUSim/build/test_results
 
 clean_test_results: CMakeFiles/clean_test_results
 clean_test_results: CMakeFiles/clean_test_results.dir/build.make
@@ -64,6 +61,6 @@ CMakeFiles/clean_test_results.dir/clean:
 .PHONY : CMakeFiles/clean_test_results.dir/clean
 
 CMakeFiles/clean_test_results.dir/depend:
-	cd /home/kevin/rosbuild_ws/package_dir/OPUSim/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/kevin/rosbuild_ws/package_dir/OPUSim /home/kevin/rosbuild_ws/package_dir/OPUSim /home/kevin/rosbuild_ws/package_dir/OPUSim/build /home/kevin/rosbuild_ws/package_dir/OPUSim/build /home/kevin/rosbuild_ws/package_dir/OPUSim/build/CMakeFiles/clean_test_results.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/kevin/rosbuild_ws/sandbox/OPUSim/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/kevin/rosbuild_ws/sandbox/OPUSim /home/kevin/rosbuild_ws/sandbox/OPUSim /home/kevin/rosbuild_ws/sandbox/OPUSim/build /home/kevin/rosbuild_ws/sandbox/OPUSim/build /home/kevin/rosbuild_ws/sandbox/OPUSim/build/CMakeFiles/clean_test_results.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/clean_test_results.dir/depend
 

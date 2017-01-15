@@ -1,7 +1,7 @@
 FILE(REMOVE_RECURSE
   "CMakeFiles/gtest_main.dir/src/gtest_main.cc.o"
-  "/home/kevin/rosbuild_ws/package_dir/OPUSim/lib/libgtest_main.pdb"
-  "/home/kevin/rosbuild_ws/package_dir/OPUSim/lib/libgtest_main.so"
+  "/home/kevin/rosbuild_ws/sandbox/OPUSim/lib/libgtest_main.pdb"
+  "/home/kevin/rosbuild_ws/sandbox/OPUSim/lib/libgtest_main.so"
 )
 
 # Per-language clean rules from dependency scanning.
