@@ -320,11 +320,11 @@ class MetaControlLaw
 	
 	}
 	
-	void setPNH( ros::NodeHandle* pnh)
+	void setPNH( ros::NodeHandle* pnh, const int& robot_number=0)
 	{
 		this->pnh = pnh;
 		
-		this->cloud_pub = this->pnh->advertise<sensor_msgs::PointCloud2>("/DEBUG/MAP", 1);
+		this->cloud_pub = this->pnh->advertise<sensor_msgs::PointCloud2>(std::string("/DEBUG/MAP"+std::to_string(robot_number)).c_str(), 1);
 	}
 	
 	void setTresholdDistAccount( const float& tresholdDistAccount)
@@ -1210,12 +1210,12 @@ class OPUSim_ControlLaw
 	{			
 		it = new image_transport::ImageTransport(nh);
 		
-		this->metacl.setPNH( &(this->nh) );
+		this->metacl.setPNH( &(this->nh), this->robot_number );
 		this->metacl.setTresholdDistAccount( tresholdDistAccount);
 		this->metacl.setTresholdDistFarEnough( tresholdDistFarEnough);
 		this->metacl.setTresholdDistPair( tresholdDistPair);
 		
-		std::string path( "/robot_model_teleop_"+std::to_string(robot_number)+"/");
+		std::string path( "/robot_model_teleop_"+std::to_string(this->robot_number)+"/");
 		//std::string path( "/robot_model_teleop/");
 		std::string pathSUB(path+"RSO");
 		std::string pathSUB_OBS(path+"OBSTACLES");
@@ -1388,10 +1388,12 @@ class OPUSim_ControlLaw
 					}
 				}
 				
+				/*
 				if(goOn)
 				{
 					this->metacl.observation(currentmsg);
 				}
+				*/
 				
 				if(goOnObs)
 				{
@@ -1408,94 +1410,94 @@ class OPUSim_ControlLaw
 				
 				if( goOn)
 				{
-				//----------------------------------------------------
-				//----------------------------------------------------
-				//IDENTIFY COUPLING PAIR
-				//----------------------------------------------------
-				//----------------------------------------------------
-				//-- Angular position rearrangin in [0,2*PI] :
+					//----------------------------------------------------
+					//----------------------------------------------------
+					//IDENTIFY COUPLING PAIR
+					//----------------------------------------------------
+					//----------------------------------------------------
+					//-- Angular position rearrangin in [0,2*PI] :
 				
-				//TODO : handle the state of robots and targets after filtering :
+					//TODO : handle the state of robots and targets after filtering :
 				
-				nbrRobotVisible = currentmsg.at<float>(0,0);
-				THETA = currentmsg.at<float>(1,0);
-				//it is the current THETA of the robot in the target reference-focused frame...
+					nbrRobotVisible = currentmsg.at<float>(0,0);
+					THETA = currentmsg.at<float>(1,0);
+					//it is the current THETA of the robot in the target reference-focused frame...
 				
-				if( THETA < 0.0f)
-				{
-					THETA = -(PI+THETA);
-				}
-				else
-				{
-					THETA = PI-THETA;
-				}
-				
-				float sumphi = 0.0f;
-				float mintheta = 2*PI;
-				
-				if(nbrRobotVisible>1)
-				{
-					//let us take the minimal values of thetas :
-					
-					for(int i=1;i<=nbrRobotVisible;i++)
+					if( THETA < 0.0f)
 					{
-						float currenttheta = currentmsg.at<float>(1,i);
-						
-						while(currenttheta > 2*PI)
-						{
-							currenttheta -= 2*PI;
-						}
-						while(currenttheta < 0.0f)
-						{
-							currenttheta += 2*PI;
-						}
-						
-						currentmsg.at<float>(1,i) = currenttheta;
-						
-						if( currenttheta > 0.0f && currenttheta < mintheta)
-						{
-							mintheta = currenttheta;
-						}
-						
+						THETA = -(PI+THETA);
 					}
+					else
+					{
+						THETA = PI-THETA;
+					}
+				
+					float sumphi = 0.0f;
+					float mintheta = 2*PI;
+				
+					if(nbrRobotVisible>1)
+					{
+						//let us take the minimal values of thetas :
 					
-					//the coupling theta is the mintheta :
-					float phi = 0.0f; //it is the current phi of the robot in the target reference-focused frame...
-					sumphi += sin(mintheta);
-				}
+						for(int i=1;i<=nbrRobotVisible;i++)
+						{
+							float currenttheta = currentmsg.at<float>(1,i);
+						
+							while(currenttheta > 2*PI)
+							{
+								currenttheta -= 2*PI;
+							}
+							while(currenttheta < 0.0f)
+							{
+								currenttheta += 2*PI;
+							}
+						
+							currentmsg.at<float>(1,i) = currenttheta;
+						
+							if( currenttheta > 0.0f && currenttheta < mintheta)
+							{
+								mintheta = currenttheta;
+							}
+						
+						}
+					
+						//the coupling theta is the mintheta :
+						float phi = 0.0f; //it is the current phi of the robot in the target reference-focused frame...
+						sumphi += sin(mintheta);
+					}
 
-				// FILTER r :
-				float rinput = currentmsg.at<float>(0,nbrRobotVisible+1);
-				r = (tau-1.0f)*r/tau+rinput/tau;
+					// FILTER r :
+					float rinput = currentmsg.at<float>(0,nbrRobotVisible+1);
+					r = (tau-1.0f)*r/tau+rinput/tau;
 				
 				
-				// PID-controller :
-				//float P = 1.0f;
-				/*
-				float desiredPhi = PI/nbrRobotVisible;
-				float I = 0.1f;
-				this->pid.setKp(P);
-				this->pid.setKi(I);
-				Mat<float> currval( abs(desiredPhi-mintheta)/PI, 1,1);
-				float Kgain = this->pid.update( currval, 0.001).get(1,1);
-				*/
-				//float Kgain = P*abs(desiredPhi-mintheta)/PI;
+					// PID-controller :
+					//float P = 1.0f;
+					/*
+					float desiredPhi = PI/nbrRobotVisible;
+					float I = 0.1f;
+					this->pid.setKp(P);
+					this->pid.setKi(I);
+					Mat<float> currval( abs(desiredPhi-mintheta)/PI, 1,1);
+					float Kgain = this->pid.update( currval, 0.001).get(1,1);
+					*/
+					//float Kgain = P*abs(desiredPhi-mintheta)/PI;
 				
-				float f = this->a*r*(1.0f-(r*r)/(this->R*this->R));
-				float g = this->Omega + this->epsilon*sumphi;
-				//float g = this->Omega + this->epsilon*(1.0f+Kgain)*sumphi;
-				
-				
-        
-				//----------------------------------------------------
-				//----------------------------------------------------
-				//----------------------------------------------------
+					float f = this->a*r*(1.0f-(r*r)/(this->R*this->R));
+					float g = this->Omega + this->epsilon*sumphi;
+					//float g = this->Omega + this->epsilon*(1.0f+Kgain)*sumphi;
 				
 				
-				//float v = Kgain*this->gain*this->kv*(f*cos(THETA) + r*g*sin(THETA));
-				v = this->gain*this->kv*(f*cos(THETA) + r*g*sin(THETA));
-				//float omega = Kgain*this->gain*this->kw*(r*g*cos(THETA) - f*sin(THETA));
-				omega = this->gain*this->kw*(r*g*cos(THETA) - f*sin(THETA));
+		      
+					//----------------------------------------------------
+					//----------------------------------------------------
+					//----------------------------------------------------
+				
+				
+					//float v = Kgain*this->gain*this->kv*(f*cos(THETA) + r*g*sin(THETA));
+					v = this->gain*this->kv*(f*cos(THETA) + r*g*sin(THETA));
+					//float omega = Kgain*this->gain*this->kw*(r*g*cos(THETA) - f*sin(THETA));
+					omega = this->gain*this->kw*(r*g*cos(THETA) - f*sin(THETA));
 				
 				}
 				
