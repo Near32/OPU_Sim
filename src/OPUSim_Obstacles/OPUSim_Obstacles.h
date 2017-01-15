@@ -25,8 +25,7 @@ namespace enc = sensor_msgs::image_encodings;
 //#define debug_v1
 #define PI 3.1415926f
 
-int low_r=0, low_g=30, low_b=0;
-int high_r=50, high_g=255, high_b=50;
+
 
 
 std::string objdetectstr;
@@ -159,6 +158,14 @@ class OPUSim_Obstacles
 	
 	std::thread* t;
 	
+	int low_r;
+	int low_g;
+	int low_b;
+	int high_r;
+	int high_g;
+	int high_b;
+	
+	
 	public :
 	
 	ros::NodeHandle nh;
@@ -180,8 +187,18 @@ class OPUSim_Obstacles
 	bool verbose;
 	
 	
-	OPUSim_Obstacles(const int& robot_number_, const int& method_ = 0, const bool& verbose_ = false ) : continuer(true), robot_number(robot_number_), method(method_),scaler(1),noobstacles(true), verbose(verbose_), pushing(false)
+	OPUSim_Obstacles(const int& robot_number_, const int& method_ = 0, const bool& verbose_ = false, const int& low_r_=0, const int& low_g_=30, const int& low_b_=0, const int& high_r_=50, const int& high_g_=255, const int& high_b_=50 ) : continuer(true), robot_number(robot_number_), method(method_),scaler(1),noobstacles(true), verbose(verbose_), pushing(false)
 	{			
+	
+		//COLOUR FILTERING :
+		this->low_r = low_r_;
+		this->low_b = low_b_;
+		this->low_g = low_g_;
+		this->high_r = high_r_;
+		this->high_b = high_b_;
+		this->high_g = high_g_;
+		
+		
 		objdetectstr = std::string("Object Detection "+std::to_string(robot_number));
 		trackstr = std::string("TRACKING "+std::to_string(robot_number));
 		
