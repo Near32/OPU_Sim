@@ -1590,6 +1590,9 @@ class OPUSim_ControlLaw
 				float currentomega = this->currentVel.angular.z;
 				float errorv = currentv-v;
 				float erroromega = currentomega-omega;
+				
+				std::cout << " CURRENT PID ERRORS : VxW : " << errorv << " x " << erroromega << std::endl;
+				
 				v = this->pidlin.update( Mat<float>(errorv,1,1) ).get(1,1);				
 				omega = this->pidang.update( Mat<float>(erroromega,1,1) ).get(1,1);
 		
