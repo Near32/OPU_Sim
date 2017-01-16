@@ -360,12 +360,14 @@ class MetaControlLaw
 		//next columns : (x,y,z) of the visible objects : in the current robot frame.
 		*/
 		
+		/*
 		//Let us set up the elapsed time :
 		if( !this->pairingToDo)
 		{
 			this->elapsedTime = float( clock() - this->lastClock) / CLOCKS_PER_SEC ;
 			this->lastClock = clock();
 		}
+		*/
 		
 		bool needToInit = false;
 		if(this->nbrObj == 0)
@@ -475,12 +477,14 @@ class MetaControlLaw
 			return;
 		}
 		
+		/*
 		//Let us set up the elapsed time :
 		if( !this->pairingToDo)
 		{
 			this->elapsedTime = float( clock() - this->lastClock) / CLOCKS_PER_SEC ;
 			this->lastClock = clock();
 		}
+		*/
 		
 		bool needToInit = false;
 		if(this->nbrObj == 0)
@@ -676,6 +680,12 @@ class MetaControlLaw
 	void observeOdometry( const cv::Mat& odo)
 	{
 		odo.copyTo(this->currentOdometry);
+		
+		this->elapsedTime = float( clock() - this->lastClock) / CLOCKS_PER_SEC ;
+		this->lastClock = clock();
+		
+		this->predictionSimple();
+		
 	}
 	
 	void predictionSimple()
@@ -685,27 +695,23 @@ class MetaControlLaw
 		The state of the art would use an Extended Kalman filter but let us try to make an easy Euler approximation first...
 		*/
 		
-		if(this->needToOptimize)
+		//this->predState = this->state;
+		// WITH VELOCITIES :
+		for(int i=0;i<this->predState.cols;i++)
 		{
-			//NO VELOCITY for the moment...
-			/*
-			this->state = this->inputState;
-			this->predState = this->state;
-			*/
+			//float vx = this->predState.at<float>(5,i);
+			//float vy = this->predState.at<float>(6,i);
+			//float vz = this->predState.at<float>(7,i);
+			float vx = this->state.at<float>(5,i);
+			float vy = this->state.at<float>(6,i);
+			float vz = this->state.at<float>(7,i);
 		
-			this->predState = this->state;
-			// WITH VELOCITIES :
-			for(int i=0;i<this->predState.cols;i++)
-			{
-				float vx = this->predState.at<float>(5,i);
-				float vy = this->predState.at<float>(6,i);
-				float vz = this->predState.at<float>(7,i);
-			
-				this->predState.at<float>(0,i) += vx*this->elapsedTime;
-				this->predState.at<float>(1,i) += vy*this->elapsedTime;
-				this->predState.at<float>(2,i) += vz*this->elapsedTime;
-			}
-			
+			//this->predState.at<float>(0,i) += vx*this->elapsedTime;
+			//this->predState.at<float>(1,i) += vy*this->elapsedTime;
+			//this->predState.at<float>(2,i) += vz*this->elapsedTime;
+			this->state.at<float>(0,i) += vx*this->elapsedTime;
+			this->state.at<float>(1,i) += vy*this->elapsedTime;
+			this->state.at<float>(2,i) += vz*this->elapsedTime;
 		}
 		
 		this->transformSimple();
@@ -725,8 +731,10 @@ class MetaControlLaw
 		
 		for(int i=0;i<this->predState.cols;i++)
 		{
-			float x = this->predState.at<float>(0,i);
-			float y = this->predState.at<float>(2,i);
+			//float x = this->predState.at<float>(0,i);
+			//float y = this->predState.at<float>(2,i);
+			float x = this->state.at<float>(0,i);
+			float y = this->state.at<float>(2,i);
 			
 			float r = sqrt( x*x + y*y);
 			float theta = std::atan2(y,x);
@@ -737,10 +745,14 @@ class MetaControlLaw
 			x = cos(theta)*r;
 			y = sin(theta)*r;
 			
-			this->predState.at<float>(0,i) = x;
-			this->predState.at<float>(2,i) = y;
+			//this->predState.at<float>(0,i) = x;
+			//this->predState.at<float>(2,i) = y;
+			this->state.at<float>(0,i) = x;
+			this->state.at<float>(2,i) = y;
 			
 		}
+		
+		this->predState = this->state;
 		
 	}
 	
@@ -904,7 +916,8 @@ class MetaControlLaw
 			
 			for(int i=0;i<this->nbrObj;i++)
 			{
-				float dist = sqrt(pow( this->predState.at<float>(0,i), 2) + pow( this->predState.at<float>(2,i), 2))+1e-3f;
+				//float dist = sqrt(pow( this->predState.at<float>(0,i), 2) + pow( this->predState.at<float>(2,i), 2))+1e-3f;
+				float dist = sqrt(pow( this->state.at<float>(0,i), 2) + pow( this->state.at<float>(2,i), 2))+1e-3f;
 				
 				//std::cout << " DIST : " << dist << std::endl;
 				
@@ -912,7 +925,8 @@ class MetaControlLaw
 				{
 					isThereRelevantObstacles = true;
 					
-					float angleObstacle = std::atan2( this->predState.at<float>(2,i), this->predState.at<float>(0,i) ) - PI/2;
+					//float angleObstacle = std::atan2( this->predState.at<float>(2,i), this->predState.at<float>(0,i) ) - PI/2;
+					float angleObstacle = std::atan2( this->state.at<float>(2,i), this->state.at<float>(0,i) ) - PI/2;
 				
 					//std::cout << " ANGLE : " << angleObstacle * 180.0f/PI << std::endl;
 					
@@ -949,6 +963,9 @@ class MetaControlLaw
 			this->tailoredControlInput = cv::Mat::zeros( 2, 1, CV_32F);
 			this->tailoredControlInput.at<float>(0,0) = desiredControlInput.at<float>(0,0);//v;
 			this->tailoredControlInput.at<float>(1,0) = angularObstacleInduicedBias + desiredControlInput.at<float>(1,0);//omega;
+			
+			std::cout << " DESIRED OMEGA : " << desiredControlInput.at<float>(1,0) << std::endl;
+			std::cout << " ADDITION OMEGA : " << angularObstacleInduicedBias << std::endl;
 			
 		}
 		
@@ -1017,20 +1034,22 @@ class MetaControlLaw
 			simple :: tailoredVelocity : vector (v,w) optimized to fulfill our objectives. 
 			complex :: tailoredAcceleration maybe... //TODO
 		*/
-		bool slamlike = true;
 		
 		if(this->needToOptimize)
 		{
 			this->needToOptimize = optimize;
 		}
 		
-		//Let us compute the predicted state :
-		if(slamlike)
-		{
-			this->predictionSimple();
-		}
-				
-		if(slamlike && this->pairingToDo)
+		//Let us run the optimization problem :
+		this->optimizeSimple( desiredControlInput);
+		//this->optimize( desiredControlInput);
+		
+		return this->tailoredControlInput;
+	}
+	
+	void update()
+	{
+		if(this->pairingToDo)
 		{
 			//Let us pair those observations with the predicted state :
 			this->pairing();
@@ -1039,31 +1058,14 @@ class MetaControlLaw
 			//Let us update the newState from the pairs and the inputState and predState:
 			this->updateState();
 		}
-		else if(this->pairingToDo)
-		{
-			this->predState = this->inputState;
-			this->newState = this->predState;
-			this->state = this->newState;
-		}
 		else
 		{
 			this->newState = this->predState;
 			this->state = this->newState;
 		}
 		
-		
-		
 		//debug : publish map :
-		if(slamlike)
-		{
-			this->publishMAP();
-		}
-		
-		//Let us run the optimization problem :
-		this->optimizeSimple( desiredControlInput);
-		//this->optimize( desiredControlInput);
-		
-		return this->tailoredControlInput;
+		this->publishMAP();
 	}
 	
 	
@@ -1196,7 +1198,12 @@ class OPUSim_ControlLaw
 	bool emergencyBreak;
 	bool verbose;
 	
-	PIDControllerM<float> pid;
+	PIDControllerM<float> pidang;
+	float Pang;
+	float Iang;
+	PIDControllerM<float> pidlin;
+	float Plin;
+	float Ilin;
 	
 	MetaControlLaw metacl;
 	
@@ -1205,10 +1212,13 @@ class OPUSim_ControlLaw
 	ros::Publisher twistpub;
 	image_transport::Subscriber img_sub;
 	image_transport::Subscriber obs_sub;
+	ros::Subscriber odometry_sub;
 	
 	int robot_number;
 	geometry_msgs::Twist twistmsg;
-	
+	geometry_msgs::Pose2D goToGoalPose;
+	geometry_msgs::Pose2D currentPose;
+	geometry_msgs::Twist currentVel;
 	
 	public :
 	
@@ -1219,7 +1229,7 @@ class OPUSim_ControlLaw
 	//------------------------------
 	
 	
-	OPUSim_ControlLaw(const int& robot_number_, const bool& emergencyBreak_ = false, const bool& verbose_ = false, const float& gain_=4.0f, const float& R_=3.0f, const float& a_=1.0f, const float& epsilon_=10.0f, const float& kv_=0.1f, const float& kw_=0.2f, const float& Omega_=1.0f, const float& tresholdDistAccount = 2.0f, const float& tresholdDistFarEnough = 3.0f, const float& tresholdDistPair = 1.0f) : continuer(true), robot_number(robot_number_), R(R_), a(a_), epsilon(epsilon_), kv(kv_), kw(kw_), Omega(Omega_), gain(gain_), THETA(0.0f), r(0.0f), emergencyBreak(emergencyBreak_), verbose(verbose_),tau(10.0f)
+	OPUSim_ControlLaw(const int& robot_number_, const bool& emergencyBreak_ = false, const bool& verbose_ = false, const float& gain_=4.0f, const float& R_=3.0f, const float& a_=1.0f, const float& epsilon_=10.0f, const float& kv_=0.1f, const float& kw_=0.2f, const float& Omega_=1.0f, const float& tresholdDistAccount = 2.0f, const float& tresholdDistFarEnough = 3.0f, const float& tresholdDistPair = 1.0f,  const float& Pang_=1e-3f, const float Iang_ = 0.0f, const float& Plin_=1e-4f, const float Ilin_ = 0.0f) : continuer(true), robot_number(robot_number_), R(R_), a(a_), epsilon(epsilon_), kv(kv_), kw(kw_), Omega(Omega_), gain(gain_), THETA(0.0f), r(0.0f), emergencyBreak(emergencyBreak_), verbose(verbose_),tau(10.0f),  Pang(Pang_), Iang(Iang_), Plin(Plin_), Ilin(Ilin_)
 	{			
 		it = new image_transport::ImageTransport(nh);
 		
@@ -1233,16 +1243,31 @@ class OPUSim_ControlLaw
 		std::string pathSUB(path+"RSO");
 		std::string pathSUB_OBS(path+"OBSTACLES");
 		std::string pathPUB(path+"cmd_vel");
+		std::string pathOdometrySUB( path+"odom_diffdrive");
 		
 		img_sub = it->subscribe( pathSUB.c_str(), 1, &OPUSim_ControlLaw::callback,this);
 		obs_sub = it->subscribe( pathSUB_OBS.c_str(), 1, &OPUSim_ControlLaw::callbackOBS,this);
+		odometry_sub = nh.subscribe( pathOdometrySUB.c_str(), 1, &OPUSim_ControlLaw::callbackOdometry, this);
 		twistpub = nh.advertise<geometry_msgs::Twist>( pathPUB.c_str(), 10);
 		
 		
 		/*-------------------------------------------*/
 		/*-------------------------------------------*/
 		/*-------------------------------------------*/
-		this->pid.setConsigne(Mat<float>(0.0f,1,1));
+		this->pidang.setConsigne(Mat<float>(0.0f,1,1));
+		this->pidlin.setConsigne(Mat<float>(0.0f,1,1));
+		this->pidang.setKp(this->Pang);
+		this->pidang.setKi(this->Iang);
+		this->pidlin.setKp(this->Plin);
+		this->pidlin.setKi(this->Ilin);		
+		/*-------------------------------------------*/
+		/*-------------------------------------------*/
+		/*-------------------------------------------*/
+		this->goToGoalPose.x = 0.0f;
+		this->goToGoalPose.y = 0.0f;
+		this->goToGoalPose.theta = 0.0f;
+		
+		this->currentPose = this->goToGoalPose;
 		/*-------------------------------------------*/
 		/*-------------------------------------------*/
 		/*-------------------------------------------*/
@@ -1325,6 +1350,32 @@ class OPUSim_ControlLaw
 		mutexRES.lock();
 		obstacles.insert(obstacles.begin(), obs);	
 		mutexRES.unlock();
+	}
+	
+	
+	void callbackOdometry(const nav_msgs::OdometryPtr& original_msg)
+	{
+		
+		geometry_msgs::Pose currentpose = original_msg->pose.pose;
+		geometry_msgs::Pose2D currentpose2D;
+		currentpose2D.x = currentpose.position.x;
+		currentpose2D.y = currentpose.position.y;
+		float desiredTheta = quaternion2Theta(currentpose.orientation);
+		//regularization around -Pi;+Pi
+		while(desiredTheta > PI)	desiredTheta -= 2*PI;
+		while(desiredTheta < -PI)	desiredTheta += 2*PI;
+		currentpose2D.theta = desiredTheta;
+		//------------------------------
+		//------------------------------
+		
+		
+		
+		
+		mutexRES.lock();
+		this->currentPose = currentpose2D;
+		this->currentVel = original_msg->twist.twist;
+		mutexRES.unlock();
+		
 	}
 	
 	
@@ -1412,14 +1463,7 @@ class OPUSim_ControlLaw
 				{
 					metacl.observationObs(currentObsmsg);
 				}
-				
-				//observe velocity :
-				cv::Mat odo = cv::Mat::zeros(2,1,CV_32F);
-				odo.at<float>(0,0) = -v;
-				odo.at<float>(1,0) = -omega;
-				
-				this->metacl.observeOdometry( odo );
-				
+								
 				
 				if( goOn)
 				{
@@ -1536,39 +1580,46 @@ class OPUSim_ControlLaw
 				{
 					v= 0.0f;
 					omega=0.0f;
+				}	
+				
+				/*-------------------------------------------------------*/
+				/*-------------------------------------------------------*/
+				//	PI(D)-Controller : 
+				/*-------------------------------------------------------*/
+				float currentv = this->currentVel.linear.x;
+				float currentomega = this->currentVel.angular.z;
+				float errorv = currentv-v;
+				float erroromega = currentomega-omega;
+				v = this->pidlin.update( Mat<float>(errorv,1,1) ).get(1,1);				
+				omega = this->pidang.update( Mat<float>(erroromega,1,1) ).get(1,1);
+		
+				//clipping :
+				float treshV = 0.5f;
+				float treshOmega = 0.2f;
+				if( abs(v) > treshV)
+				{
+					v = v/abs(v)*treshV;
 				}
 				
-				//----------------------------------------------------
-				//----------------------------------------------------
-				//----------------------------------------------------
-				
-			}
-			else
-			{
-				//----------------------------------------------------
-				//UPDATE META Control Law :
-				//----------------------------------------------------
-				cv::Mat desiredControlInput = cv::Mat::zeros( 2,1, CV_32F);
-				desiredControlInput.at<float>(0,0) = v;
-				desiredControlInput.at<float>(1,0) = omega;
-				
+				if( abs(omega) > treshOmega)
+				{
+					omega = omega/abs(omega)*treshOmega;
+				}
+				/*-------------------------------------------------------*/
+				/*-------------------------------------------------------*/
 				//observe velocity :
 				cv::Mat odo = cv::Mat::zeros(2,1,CV_32F);
-				odo.at<float>(0,0) = -v;
-				odo.at<float>(1,0) = -omega;
-				
+				odo.at<float>(0,0) = this->currentVel.linear.x;
+				odo.at<float>(1,0) = this->currentVel.angular.z;
+			
 				this->metacl.observeOdometry( odo );
-				
-				//filtering that prevent obstacles to become hurdles to the correct orientation of the robot...
-				bool optimize = true;
-				
-				cv::Mat tailoredControlInput( this->metacl.run( desiredControlInput, optimize) );
-				v = tailoredControlInput.at<float>(0,0);
-				omega = tailoredControlInput.at<float>(1,0);		
-				//----------------------------------------------------
-				//----------------------------------------------------
+				this->metacl.update();
 				
 			}
+			
+			
+			
+			
 			
 			//----------------------------
 			//		Publisher
@@ -1589,7 +1640,7 @@ class OPUSim_ControlLaw
 			twistmsg.angular.y = 0.0f;
 			twistmsg.angular.z = -omega;
 			
-			if(this->verbose)
+			if(this->verbose && (goOn || goOnObs) )
 			{ 
 				std::cout << " V x W : " << v << " x " << omega << std::endl;
 			}
