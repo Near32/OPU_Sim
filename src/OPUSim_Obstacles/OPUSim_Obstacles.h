@@ -432,8 +432,9 @@ class OPUSim_Obstacles
 							cv::drawContours( drawing, contours[i], j, color, 2, 8, hierarchy[i], 0, cv::Point() );
 						
 							cv::Scalar meancenter( mean(contours[i][j] ) );
+							cv::Scalar mincenter( min(contours[i][j] ) );
 
-							cv::Point temp(meancenter[0],meancenter[1]);
+							cv::Point temp(meancenter[0],mincenter[1]);
 						
 							float tresholdDistance = 10.0f;
 							bool duplicate = alreadyExists( temp, obstacles[i], tresholdDistance);

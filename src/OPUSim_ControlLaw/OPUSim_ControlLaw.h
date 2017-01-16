@@ -36,6 +36,7 @@ using namespace std;
 #include <sensor_msgs/PointCloud2.h>
 
 #include "../PIDController/PIDControllerM.h"
+#include "../RunningStats/RunningStats.h"
 
 namespace enc = sensor_msgs::image_encodings;
 
@@ -280,7 +281,7 @@ class MetaControlLaw
 	
 	public :
 	
-	MetaControlLaw(const float& tresholdDist_ = 0.75f, const float& tresholdFarEnough_ = 2.0f, const float& tresholdDistPair_ = 1.0f) : nbrObj(0), lastClock( clock() ), needToOptimize(false), tresholdDist(tresholdDist_),currentOdometry(cv::Mat::zeros(2,1,CV_32F)), pnh(NULL), pairingToDo(false), tresholdFarEnough(tresholdFarEnough_), tresholdDistPair(tresholdDistPair_)
+	MetaControlLaw(const float& tresholdDist_ = 0.5f, const float& tresholdFarEnough_ = 2.0f, const float& tresholdDistPair_ = 1.0f) : nbrObj(0), lastClock( clock() ), needToOptimize(false), tresholdDist(tresholdDist_),currentOdometry(cv::Mat::zeros(2,1,CV_32F)), pnh(NULL), pairingToDo(false), tresholdFarEnough(tresholdFarEnough_), tresholdDistPair(tresholdDistPair_)
 	{
 		this->nbrAngularIntervals = 8;
 		this->angularIntervals = cv::Mat::zeros( this->nbrAngularIntervals, 2, CV_32F);
@@ -305,14 +306,14 @@ class MetaControlLaw
 		
 		this->Interval2Bias = cv::Mat::zeros( this->nbrAngularIntervals, 1, CV_32F);
 		float testBias = 0.0f;
-		this->Interval2Bias.at<float>(0,0) = PI/12-testBias;
-		this->Interval2Bias.at<float>(0,1) = PI/12-testBias;
-		this->Interval2Bias.at<float>(0,2) = 2*PI/12-testBias;
-		this->Interval2Bias.at<float>(0,3) = 3*PI/12-testBias;
-		this->Interval2Bias.at<float>(0,4) = -3*PI/12+testBias;
-		this->Interval2Bias.at<float>(0,5) = -2*PI/12+testBias;
-		this->Interval2Bias.at<float>(0,6) = -PI/12+testBias;
-		this->Interval2Bias.at<float>(0,7) = -PI/12+testBias;
+		this->Interval2Bias.at<float>(0,0) = -PI/12-testBias;
+		this->Interval2Bias.at<float>(0,1) = -PI/12-testBias;
+		this->Interval2Bias.at<float>(0,2) = -2*PI/12-testBias;
+		this->Interval2Bias.at<float>(0,3) = -3*PI/12-testBias;
+		this->Interval2Bias.at<float>(0,4) = 3*PI/12+testBias;
+		this->Interval2Bias.at<float>(0,5) = 2*PI/12+testBias;
+		this->Interval2Bias.at<float>(0,6) = PI/12+testBias;
+		this->Interval2Bias.at<float>(0,7) = PI/12+testBias;
 	}
 	
 	~MetaControlLaw()
@@ -926,9 +927,9 @@ class MetaControlLaw
 					isThereRelevantObstacles = true;
 					
 					//float angleObstacle = std::atan2( this->predState.at<float>(2,i), this->predState.at<float>(0,i) ) - PI/2;
-					float angleObstacle = std::atan2( this->state.at<float>(2,i), this->state.at<float>(0,i) ) - PI/2;
+					float angleObstacle = std::atan2( this->state.at<float>(2,i), this->state.at<float>(0,i) ) + PI;
 				
-					//std::cout << " ANGLE : " << angleObstacle * 180.0f/PI << std::endl;
+					std::cout << " ANGLE : " << angleObstacle * 180.0f/PI << std::endl;
 					
 					for(int j=this->nbrAngularIntervals;j--;)
 					{
@@ -1229,7 +1230,7 @@ class OPUSim_ControlLaw
 	//------------------------------
 	
 	
-	OPUSim_ControlLaw(const int& robot_number_, const bool& emergencyBreak_ = false, const bool& verbose_ = false, const float& gain_=4.0f, const float& R_=3.0f, const float& a_=1.0f, const float& epsilon_=10.0f, const float& kv_=0.1f, const float& kw_=0.2f, const float& Omega_=1.0f, const float& tresholdDistAccount = 2.0f, const float& tresholdDistFarEnough = 3.0f, const float& tresholdDistPair = 1.0f,  const float& Pang_=1e-1f, const float Iang_ = 0.0f, const float& Plin_=1e-3f, const float Ilin_ = 0.0f) : continuer(true), robot_number(robot_number_), R(R_), a(a_), epsilon(epsilon_), kv(kv_), kw(kw_), Omega(Omega_), gain(gain_), THETA(0.0f), r(0.0f), emergencyBreak(emergencyBreak_), verbose(verbose_),tau(10.0f),  Pang(Pang_), Iang(Iang_), Plin(Plin_), Ilin(Ilin_)
+	OPUSim_ControlLaw(const int& robot_number_, const bool& emergencyBreak_ = false, const bool& verbose_ = false, const float& gain_=4.0f, const float& R_=3.0f, const float& a_=1.0f, const float& epsilon_=10.0f, const float& kv_=0.1f, const float& kw_=0.2f, const float& Omega_=1.0f, const float& tresholdDistAccount = 1.0f, const float& tresholdDistFarEnough = 2.0f, const float& tresholdDistPair = 1.0f,  const float& Pang_=5e-1f, const float Iang_ = 0.0f, const float& Plin_=2e-1f, const float Ilin_ = 0.0f) : continuer(true), robot_number(robot_number_), R(R_), a(a_), epsilon(epsilon_), kv(kv_), kw(kw_), Omega(Omega_), gain(gain_), THETA(0.0f), r(0.0f), emergencyBreak(emergencyBreak_), verbose(verbose_),tau(10.0f),  Pang(Pang_), Iang(Iang_), Plin(Plin_), Ilin(Ilin_)
 	{			
 		it = new image_transport::ImageTransport(nh);
 		
