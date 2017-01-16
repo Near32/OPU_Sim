@@ -1229,7 +1229,7 @@ class OPUSim_ControlLaw
 	//------------------------------
 	
 	
-	OPUSim_ControlLaw(const int& robot_number_, const bool& emergencyBreak_ = false, const bool& verbose_ = false, const float& gain_=4.0f, const float& R_=3.0f, const float& a_=1.0f, const float& epsilon_=10.0f, const float& kv_=0.1f, const float& kw_=0.2f, const float& Omega_=1.0f, const float& tresholdDistAccount = 2.0f, const float& tresholdDistFarEnough = 3.0f, const float& tresholdDistPair = 1.0f,  const float& Pang_=1e-3f, const float Iang_ = 0.0f, const float& Plin_=1e-4f, const float Ilin_ = 0.0f) : continuer(true), robot_number(robot_number_), R(R_), a(a_), epsilon(epsilon_), kv(kv_), kw(kw_), Omega(Omega_), gain(gain_), THETA(0.0f), r(0.0f), emergencyBreak(emergencyBreak_), verbose(verbose_),tau(10.0f),  Pang(Pang_), Iang(Iang_), Plin(Plin_), Ilin(Ilin_)
+	OPUSim_ControlLaw(const int& robot_number_, const bool& emergencyBreak_ = false, const bool& verbose_ = false, const float& gain_=4.0f, const float& R_=3.0f, const float& a_=1.0f, const float& epsilon_=10.0f, const float& kv_=0.1f, const float& kw_=0.2f, const float& Omega_=1.0f, const float& tresholdDistAccount = 2.0f, const float& tresholdDistFarEnough = 3.0f, const float& tresholdDistPair = 1.0f,  const float& Pang_=1e-1f, const float Iang_ = 0.0f, const float& Plin_=1e-3f, const float Ilin_ = 0.0f) : continuer(true), robot_number(robot_number_), R(R_), a(a_), epsilon(epsilon_), kv(kv_), kw(kw_), Omega(Omega_), gain(gain_), THETA(0.0f), r(0.0f), emergencyBreak(emergencyBreak_), verbose(verbose_),tau(10.0f),  Pang(Pang_), Iang(Iang_), Plin(Plin_), Ilin(Ilin_)
 	{			
 		it = new image_transport::ImageTransport(nh);
 		
@@ -1597,8 +1597,8 @@ class OPUSim_ControlLaw
 				omega = this->pidang.update( Mat<float>(erroromega,1,1) ).get(1,1);
 		
 				//clipping :
-				float treshV = 0.5f;
-				float treshOmega = 0.2f;
+				float treshV = 1.5f;
+				float treshOmega = 1.5f;
 				if( abs(v) > treshV)
 				{
 					v = v/abs(v)*treshV;
