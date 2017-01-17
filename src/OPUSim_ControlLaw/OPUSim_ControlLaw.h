@@ -733,8 +733,8 @@ class MetaControlLaw
 		*/
 		//Let us apply the rotation around the y axis (that is the z-axis in the frame of the robot)...
 		
-		float deltaTheta = currentOdometry.at<float>(1,0)*this->elapsedTime;
-		float deltaR = currentOdometry.at<float>(0,0)*this->elapsedTime;
+		float deltaTheta = -currentOdometry.at<float>(1,0)*this->elapsedTime;
+		float deltaR = -currentOdometry.at<float>(0,0)*this->elapsedTime;
 		
 		for(int i=0;i<this->predState.cols;i++)
 		{
@@ -1236,16 +1236,17 @@ class OPUSim_ControlLaw
 	geometry_msgs::Pose2D currentPose;
 	geometry_msgs::Twist currentVel;
 	
+	
 	public :
 	
 	ros::NodeHandle nh;
-	
+	RunningStats<float>* rs;
 	
 	//------------------------------
 	//------------------------------
 	
 	
-	OPUSim_ControlLaw(const int& robot_number_, const bool& emergencyBreak_ = false, const bool& verbose_ = false, const float& gain_=4.0f, const float& R_=3.0f, const float& a_=1.0f, const float& epsilon_=10.0f, const float& kv_=0.1f, const float& kw_=0.2f, const float& Omega_=1.0f, const float& tresholdDistAccount_ = 0.6f, const float& tresholdDistFarEnough_ = 2.0f, const float& tresholdDistPair_ = 1.0f,  const float& Pang_=5e-1f, const float Iang_ = 0.0f, const float& Plin_=2e-1f, const float Ilin_ = 0.0f) : continuer(true), robot_number(robot_number_), R(R_), a(a_), epsilon(epsilon_), kv(kv_), kw(kw_), Omega(Omega_), gain(gain_), THETA(0.0f), r(0.0f), emergencyBreak(emergencyBreak_), verbose(verbose_),tau(10.0f),  Pang(Pang_), Iang(Iang_), Plin(Plin_), Ilin(Ilin_), tresholdDistAccount(tresholdDistAccount_)
+	OPUSim_ControlLaw(const int& robot_number_, const bool& emergencyBreak_ = false, const bool& verbose_ = false, const float& gain_=4.0f, const float& R_=3.0f, const float& a_=1.0f, const float& epsilon_=10.0f, const float& kv_=0.1f, const float& kw_=0.2f, const float& Omega_=1.0f, const float& tresholdDistAccount_ = 0.6f, const float& tresholdDistFarEnough_ = 2.0f, const float& tresholdDistPair_ = 1.0f,  const float& Pang_=1e-1f, const float Iang_ = 0.0f, const float& Plin_=1e-1f, const float Ilin_ = 0.0f) : continuer(true), robot_number(robot_number_), R(R_), a(a_), epsilon(epsilon_), kv(kv_), kw(kw_), Omega(Omega_), gain(gain_), THETA(0.0f), r(0.0f), emergencyBreak(emergencyBreak_), verbose(verbose_),tau(10.0f),  Pang(Pang_), Iang(Iang_), Plin(Plin_), Ilin(Ilin_), tresholdDistAccount(tresholdDistAccount_)
 	{		
 	
 		if( this->nh.hasParam("OPUSim_ControlLaw/robot_number") )
@@ -1307,8 +1308,9 @@ class OPUSim_ControlLaw
 		/*-------------------------------------------*/
 		/*-------------------------------------------*/
 		
+		this->rs = new RunningStats<float>(std::string("./ControlLaw_datas"), 100 );
+		this->t = new std::thread(&OPUSim_ControlLaw::loop, this);
 		
-		t = new std::thread(&OPUSim_ControlLaw::loop, this);
 		
 		ROS_INFO( std::string("OPUSim_ControlLaw::"+std::to_string(robot_number)+"::Initialization : OK.").c_str() );
 	}
@@ -1325,6 +1327,7 @@ class OPUSim_ControlLaw
 		
 		delete t;
 		delete it;
+		delete rs;
 		
 		ROS_INFO("OPUSim_ControlLaw::Exiting.");
 	}
@@ -1424,8 +1427,8 @@ class OPUSim_ControlLaw
 		cv::Mat currentmsg;
 		cv::Mat currentObsmsg;
     int nbrRobotVisible = 0;
-    float v = 0.0f;
-    float omega = 0.0f;
+    float v = 0.0f, outputv=0.0f;
+    float omega = 0.0f, outputomega=0.0f;
     
 		mutexRES.lock();
 		while(continuer)
@@ -1590,24 +1593,31 @@ class OPUSim_ControlLaw
 					v = this->gain*this->kv*(f*cos(THETA) + r*g*sin(THETA));
 					//float omega = Kgain*this->gain*this->kw*(r*g*cos(THETA) - f*sin(THETA));
 					omega = this->gain*this->kw*(r*g*cos(THETA) - f*sin(THETA));
+					
+					//LOGS :
+					this->rs->tadd( std::string("rinput nl"), rinput );
+					this->rs->tadd( std::string("r nl"), r );
+					this->rs->tadd( std::string("v nl"), v );
+					this->rs->tadd( std::string("omega nl"), omega );
 				
 				}
 				
 				//----------------------------------------------------
 				//COMPUTE META Control Law :
 				//----------------------------------------------------
+				/*
 				cv::Mat desiredControlInput = cv::Mat::zeros( 2,1, CV_32F);
 				desiredControlInput.at<float>(0,0) = v;
 				desiredControlInput.at<float>(1,0) = omega;
 				
 				
 				//filtering that prevent obstacles to become hurdles to the correct orientation of the robot...
-				bool optimize = true;
+				bool optimize = false;
 				
 				cv::Mat tailoredControlInput( this->metacl.run( desiredControlInput, optimize) );
 				v = tailoredControlInput.at<float>(0,0);
 				omega = tailoredControlInput.at<float>(1,0);
-				
+				*/
 				//----------------------------------------------------
 				//----------------------------------------------------
 				
@@ -1621,44 +1631,68 @@ class OPUSim_ControlLaw
 				/*-------------------------------------------------------*/
 				//	PI(D)-Controller : 
 				/*-------------------------------------------------------*/
-				float currentv = this->currentVel.linear.x;
-				float currentomega = this->currentVel.angular.z;
-				float errorv = currentv-v;
-				float erroromega = currentomega-omega;
 				
-				std::cout << " CURRENT PID ERRORS : VxW : " << errorv << " x " << erroromega << std::endl;
 				
-				v = this->pidlin.update( Mat<float>(errorv,1,1) ).get(1,1);				
-				omega = this->pidang.update( Mat<float>(erroromega,1,1) ).get(1,1);
-				
-				std::cout << " PID outputs :: before clipping :: VxW : " << v << " x " << omega << std::endl;
-				
-				//clipping :
-				float treshV = 2.5f;
-				float treshOmega = 2.5f;
-				if( abs(v) > treshV)
-				{
-					v = (v*treshV)/abs(v);
-				}
-				
-				if( abs(omega) > treshOmega)
-				{
-					omega = (omega*treshOmega)/abs(omega);
-				}
-				/*-------------------------------------------------------*/
 				/*-------------------------------------------------------*/
 				//observe velocity :
+				float currentv = -this->currentVel.linear.x;
+				float currentomega = this->currentVel.angular.z;
+				float errorv = v-currentv;
+				float erroromega = omega-currentomega;
+				
+				
 				cv::Mat odo = cv::Mat::zeros(2,1,CV_32F);
-				odo.at<float>(0,0) = this->currentVel.linear.x;
-				odo.at<float>(1,0) = this->currentVel.angular.z;
-			
+				odo.at<float>(0,0) = currentv;
+				odo.at<float>(1,0) = currentomega;
+				
 				this->metacl.observeOdometry( odo );
 				this->metacl.update();
+				
+				/*-------------------------------------------------------*/
+				
+				this->pidlin.setConsigne(Mat<float>(v,1,1) );
+				this->pidang.setConsigne(Mat<float>(omega,1,1) );
+				
+				outputv = this->pidlin.update( Mat<float>(currentv,1,1) ).get(1,1);				
+				outputomega = this->pidang.update( Mat<float>(currentomega,1,1) ).get(1,1);
+				
+				std::cout << " PID outputs :: VxW : " << v << " x " << omega << std::endl;
+				
+				//LOGS :
+				this->rs->tadd( std::string("v error"), errorv );
+				this->rs->tadd( std::string("omega error"), erroromega );
+				
+				this->rs->tadd( std::string("v consigne"), v );
+				this->rs->tadd( std::string("omega consigne"), omega );
+				
+				this->rs->tadd( std::string("v pid"), outputv );
+				this->rs->tadd( std::string("omega pid"), outputomega );
+				
+				this->rs->tadd( std::string("v odometry"), odo.at<float>(0,0) );
+				this->rs->tadd( std::string("omega odometry"), odo.at<float>(1,0) );
+				
+				
+				//clipping :
+				float treshV = 2.0f;
+				float treshOmega = 2.0f;
+				if( abs(outputv) > treshV)
+				{
+					outputv = (outputv*treshV)/abs(outputv);
+				}
+				
+				if( abs(outputomega) > treshOmega)
+				{
+					outputomega = (outputomega*treshOmega)/abs(outputomega);
+				}
 				
 			}
 			
 			
-			
+			if(this->emergencyBreak)
+			{
+				outputv= 0.0f;
+				outputomega=0.0f;
+			}
 			
 			
 			//----------------------------
@@ -1672,13 +1706,13 @@ class OPUSim_ControlLaw
 			//----------------------------------------------------
 			
 			
-			twistmsg.linear.x = -v;
+			twistmsg.linear.x = -outputv;
 			twistmsg.linear.y = 0.0f;
 			twistmsg.linear.z = 0.0f;
 			
 			twistmsg.angular.x = 0.0f;
 			twistmsg.angular.y = 0.0f;
-			twistmsg.angular.z = -omega;
+			twistmsg.angular.z = -outputomega;
 			
 			if(this->verbose && (goOn || goOnObs) )
 			{ 
