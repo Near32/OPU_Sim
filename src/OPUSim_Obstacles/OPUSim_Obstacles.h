@@ -189,6 +189,17 @@ class OPUSim_Obstacles
 	
 	OPUSim_Obstacles(const int& robot_number_, const int& method_ = 0, const bool& verbose_ = false, const int& low_r_=0, const int& low_g_=30, const int& low_b_=0, const int& high_r_=50, const int& high_g_=255, const int& high_b_=50 ) : continuer(true), robot_number(robot_number_), method(method_),scaler(1),noobstacles(true), verbose(verbose_), pushing(false)
 	{			
+		if( this->nh.hasParam("OPUSim_Obstacles/robot_number") )
+		{
+			this->nh.getParam("OPUSim_Obstacles/robot_number",this->robot_number);
+		}
+		
+		if( this->nh.hasParam("OPUSim_Obstacles/debug") )
+		{
+			int verbose;
+			this->nh.getParam("OPUSim_Obstacles/debug",verbose);
+			this->verbose = (verbose==1?true:false);
+		}
 	
 		//COLOUR FILTERING :
 		this->low_r = low_r_;
@@ -433,7 +444,7 @@ class OPUSim_Obstacles
 						
 							cv::Scalar meancenter( mean(contours[i][j] ) );
 							
-							float minycont = contours[i][j][0].y;
+							float minycont = 0.0f;
 							for(int k=0;k<=contours[i][j].size();k++)
 							{
 								if(minycont < contours[i][j][k].y)

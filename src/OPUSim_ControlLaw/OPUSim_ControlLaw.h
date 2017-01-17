@@ -283,37 +283,43 @@ class MetaControlLaw
 	
 	MetaControlLaw(const float& tresholdDist_ = 0.5f, const float& tresholdFarEnough_ = 2.0f, const float& tresholdDistPair_ = 1.0f) : nbrObj(0), lastClock( clock() ), needToOptimize(false), tresholdDist(tresholdDist_),currentOdometry(cv::Mat::zeros(2,1,CV_32F)), pnh(NULL), pairingToDo(false), tresholdFarEnough(tresholdFarEnough_), tresholdDistPair(tresholdDistPair_)
 	{
-		this->nbrAngularIntervals = 8;
+		this->nbrAngularIntervals = 10;
 		this->angularIntervals = cv::Mat::zeros( this->nbrAngularIntervals, 2, CV_32F);
 		//upper bounds :
-		this->angularIntervals.at<float>(0,0) = PI/2;
-		this->angularIntervals.at<float>(0,1) = 3*PI/12;
-		this->angularIntervals.at<float>(0,2) = 2*PI/12;
-		this->angularIntervals.at<float>(0,3) = 1*PI/12;
-		this->angularIntervals.at<float>(0,4) = 0.0f;
-		this->angularIntervals.at<float>(0,5) = -1*PI/12;
-		this->angularIntervals.at<float>(0,6) = -2*PI/12;
-		this->angularIntervals.at<float>(0,7) = -3*PI/12;
+		this->angularIntervals.at<float>(0,0) = PI;
+		this->angularIntervals.at<float>(0,1) = PI/2;
+		this->angularIntervals.at<float>(0,2) = 3*PI/12;
+		this->angularIntervals.at<float>(0,3) = 2*PI/12;
+		this->angularIntervals.at<float>(0,4) = 1*PI/12;
+		this->angularIntervals.at<float>(0,5) = 0.0f;
+		this->angularIntervals.at<float>(0,6) = -1*PI/12;
+		this->angularIntervals.at<float>(0,7) = -2*PI/12;
+		this->angularIntervals.at<float>(0,8) = -3*PI/12;
+		this->angularIntervals.at<float>(0,9) = -PI/2;
 		//lower bounds :
-		this->angularIntervals.at<float>(1,7) = -PI/2;
-		this->angularIntervals.at<float>(1,6) = -3*PI/12;
-		this->angularIntervals.at<float>(1,5) = -2*PI/12;
-		this->angularIntervals.at<float>(1,4) = -1*PI/12;
-		this->angularIntervals.at<float>(1,3) = 0.0f;
-		this->angularIntervals.at<float>(1,2) = 1*PI/12;
-		this->angularIntervals.at<float>(1,1) = 2*PI/12;
-		this->angularIntervals.at<float>(1,0) = 3*PI/12;
+		this->angularIntervals.at<float>(1,9) = -PI;
+		this->angularIntervals.at<float>(1,8) = -PI/2;
+		this->angularIntervals.at<float>(1,7) = -3*PI/12;
+		this->angularIntervals.at<float>(1,6) = -2*PI/12;
+		this->angularIntervals.at<float>(1,5) = -1*PI/12;
+		this->angularIntervals.at<float>(1,4) = 0.0f;
+		this->angularIntervals.at<float>(1,3) = 1*PI/12;
+		this->angularIntervals.at<float>(1,2) = 2*PI/12;
+		this->angularIntervals.at<float>(1,1) = 3*PI/12;
+		this->angularIntervals.at<float>(1,0) = PI/2;
 		
 		this->Interval2Bias = cv::Mat::zeros( this->nbrAngularIntervals, 1, CV_32F);
 		float testBias = 0.0f;
-		this->Interval2Bias.at<float>(0,0) = -PI/12-testBias;
-		this->Interval2Bias.at<float>(0,1) = -PI/12-testBias;
-		this->Interval2Bias.at<float>(0,2) = -2*PI/12-testBias;
-		this->Interval2Bias.at<float>(0,3) = -3*PI/12-testBias;
-		this->Interval2Bias.at<float>(0,4) = 3*PI/12+testBias;
-		this->Interval2Bias.at<float>(0,5) = 2*PI/12+testBias;
-		this->Interval2Bias.at<float>(0,6) = PI/12+testBias;
-		this->Interval2Bias.at<float>(0,7) = PI/12+testBias;
+		this->Interval2Bias.at<float>(0,0) = 0.0f-testBias;
+		this->Interval2Bias.at<float>(0,1) = PI/12-testBias;
+		this->Interval2Bias.at<float>(0,2) = PI/12-testBias;
+		this->Interval2Bias.at<float>(0,3) = 2*PI/12-testBias;
+		this->Interval2Bias.at<float>(0,4) = 3*PI/12-testBias;
+		this->Interval2Bias.at<float>(0,5) = -3*PI/12+testBias;
+		this->Interval2Bias.at<float>(0,6) = -2*PI/12+testBias;
+		this->Interval2Bias.at<float>(0,7) = -PI/12+testBias;
+		this->Interval2Bias.at<float>(0,8) = -PI/12+testBias;
+		this->Interval2Bias.at<float>(0,9) = -0.0f+testBias;
 	}
 	
 	~MetaControlLaw()
@@ -928,7 +934,15 @@ class MetaControlLaw
 					
 					//float angleObstacle = std::atan2( this->predState.at<float>(2,i), this->predState.at<float>(0,i) ) - PI/2;
 					float angleObstacle = std::atan2( this->state.at<float>(2,i), this->state.at<float>(0,i) ) + PI;
-				
+					while( angleObstacle > PI)
+					{
+						angleObstacle -= 2*PI;
+					}
+					while( angleObstacle < -PI)
+					{
+						angleObstacle += 2*PI;
+					}
+					
 					std::cout << " ANGLE : " << angleObstacle * 180.0f/PI << std::endl;
 					
 					for(int j=this->nbrAngularIntervals;j--;)
@@ -1207,6 +1221,7 @@ class OPUSim_ControlLaw
 	float Ilin;
 	
 	MetaControlLaw metacl;
+	float tresholdDistAccount;
 	
 	
 	image_transport::ImageTransport* it;
@@ -1230,14 +1245,33 @@ class OPUSim_ControlLaw
 	//------------------------------
 	
 	
-	OPUSim_ControlLaw(const int& robot_number_, const bool& emergencyBreak_ = false, const bool& verbose_ = false, const float& gain_=4.0f, const float& R_=3.0f, const float& a_=1.0f, const float& epsilon_=10.0f, const float& kv_=0.1f, const float& kw_=0.2f, const float& Omega_=1.0f, const float& tresholdDistAccount = 1.0f, const float& tresholdDistFarEnough = 2.0f, const float& tresholdDistPair = 1.0f,  const float& Pang_=5e-1f, const float Iang_ = 0.0f, const float& Plin_=2e-1f, const float Ilin_ = 0.0f) : continuer(true), robot_number(robot_number_), R(R_), a(a_), epsilon(epsilon_), kv(kv_), kw(kw_), Omega(Omega_), gain(gain_), THETA(0.0f), r(0.0f), emergencyBreak(emergencyBreak_), verbose(verbose_),tau(10.0f),  Pang(Pang_), Iang(Iang_), Plin(Plin_), Ilin(Ilin_)
-	{			
+	OPUSim_ControlLaw(const int& robot_number_, const bool& emergencyBreak_ = false, const bool& verbose_ = false, const float& gain_=4.0f, const float& R_=3.0f, const float& a_=1.0f, const float& epsilon_=10.0f, const float& kv_=0.1f, const float& kw_=0.2f, const float& Omega_=1.0f, const float& tresholdDistAccount_ = 0.6f, const float& tresholdDistFarEnough_ = 2.0f, const float& tresholdDistPair_ = 1.0f,  const float& Pang_=5e-1f, const float Iang_ = 0.0f, const float& Plin_=2e-1f, const float Ilin_ = 0.0f) : continuer(true), robot_number(robot_number_), R(R_), a(a_), epsilon(epsilon_), kv(kv_), kw(kw_), Omega(Omega_), gain(gain_), THETA(0.0f), r(0.0f), emergencyBreak(emergencyBreak_), verbose(verbose_),tau(10.0f),  Pang(Pang_), Iang(Iang_), Plin(Plin_), Ilin(Ilin_), tresholdDistAccount(tresholdDistAccount_)
+	{		
+	
+		if( this->nh.hasParam("OPUSim_ControlLaw/robot_number") )
+		{
+			this->nh.getParam("OPUSim_ControlLaw/robot_number",this->robot_number);
+		}
+		
+		if( this->nh.hasParam("OPUSim_ControlLaw/emergencyBreak") )
+		{
+			int eb;
+			this->nh.getParam("OPUSim_ControlLaw/emergencyBreak",eb);
+			this->emergencyBreak = (eb==1?true:false);
+		}
+		
+		if( this->nh.hasParam("OPUSim_ControlLaw/tresholdDistAccount") )
+		{
+			this->nh.getParam("OPUSim_ControlLaw/tresholdDistAccount", this->tresholdDistAccount);
+		}
+		
+			
 		it = new image_transport::ImageTransport(nh);
 		
 		this->metacl.setPNH( &(this->nh), this->robot_number );
-		this->metacl.setTresholdDistAccount( tresholdDistAccount);
-		this->metacl.setTresholdDistFarEnough( tresholdDistFarEnough);
-		this->metacl.setTresholdDistPair( tresholdDistPair);
+		this->metacl.setTresholdDistAccount( this->tresholdDistAccount);
+		this->metacl.setTresholdDistFarEnough( tresholdDistFarEnough_);
+		this->metacl.setTresholdDistPair( tresholdDistPair_);
 		
 		std::string path( "/robot_model_teleop_"+std::to_string(this->robot_number)+"/");
 		//std::string path( "/robot_model_teleop/");
@@ -1404,7 +1438,7 @@ class OPUSim_ControlLaw
 			bool goOn = true;
 			bool goOnObs = true;
 			
-			if(frames.size() >= 1)
+			if(frames.size() >= 1 && frames[0].rows != 0 && frames[0].cols != 0)
 			{
 				goOn = true;
 			}
@@ -1413,7 +1447,7 @@ class OPUSim_ControlLaw
 				goOn = false;
 			}
 			
-			if(obstacles.size() >= 1)
+			if(obstacles.size() >= 1 && obstacles[0].rows != 0 && obstacles[0].cols != 0)
 			{
 				goOnObs = true;
 			}
@@ -1596,18 +1630,20 @@ class OPUSim_ControlLaw
 				
 				v = this->pidlin.update( Mat<float>(errorv,1,1) ).get(1,1);				
 				omega = this->pidang.update( Mat<float>(erroromega,1,1) ).get(1,1);
-		
+				
+				std::cout << " PID outputs :: before clipping :: VxW : " << v << " x " << omega << std::endl;
+				
 				//clipping :
-				float treshV = 1.5f;
-				float treshOmega = 1.5f;
+				float treshV = 2.5f;
+				float treshOmega = 2.5f;
 				if( abs(v) > treshV)
 				{
-					v = v/abs(v)*treshV;
+					v = (v*treshV)/abs(v);
 				}
 				
 				if( abs(omega) > treshOmega)
 				{
-					omega = omega/abs(omega)*treshOmega;
+					omega = (omega*treshOmega)/abs(omega);
 				}
 				/*-------------------------------------------------------*/
 				/*-------------------------------------------------------*/

@@ -193,6 +193,18 @@ class OPUSim_RelativeSwarmOdometry
 	
 	OPUSim_RelativeSwarmOdometry(const int& robot_number_, const int& method_ = 0, const bool& verbose_ = false ) : continuer(true), robot_number(robot_number_), method(method_),scaler(1),notarget(true),noneighbours(true), verbose(verbose_), pushing(false)
 	{			
+		if( this->nh.hasParam("OPUSim_RelativeSwarmOdometry/robot_number") )
+		{
+			this->nh.getParam("OPUSim_RelativeSwarmOdometry/robot_number",this->robot_number);
+		}
+		
+		if( this->nh.hasParam("OPUSim_RelativeSwarmOdometry/debug") )
+		{
+			int verbose;
+			this->nh.getParam("OPUSim_RelativeSwarmOdometry/debug",verbose);
+			this->verbose = (verbose==1?true:false);
+		}
+		
 		objdetectstr = std::string("Object Detection "+std::to_string(robot_number));
 		trackstr = std::string("TRACKING "+std::to_string(robot_number));
 		
@@ -437,7 +449,7 @@ class OPUSim_RelativeSwarmOdometry
 							cv::Scalar meancenter( mean(contours[i][j] ) );
 
 							
-							float minycont = contours[i][j][0].y;
+							float minycont = 0.0f;
 							for(int k=0;k<=contours[i][j].size();k++)
 							{
 								if(minycont < contours[i][j][k].y)
@@ -481,7 +493,7 @@ class OPUSim_RelativeSwarmOdometry
 						
 							cv::Scalar meancenter( mean(tcontour[i][j] ) );
 
-							float minycont = tcontour[i][j][0].y;
+							float minycont = 0.0f;
 							for(int k=0;k<=tcontour[i][j].size();k++)
 							{
 								if(minycont < tcontour[i][j][k].y)
