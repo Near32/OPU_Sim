@@ -561,6 +561,7 @@ class OPUSim_RelativeSwarmOdometry
 				float cameraoffsetangle = 45.0f;
 				float wTothetas = 360.0f/float(w);
 				float offseth = float(h)/2;
+				float offsetcamerah = 0.01f;
 				float hToradius = float(h-offseth);
 			
 				for(int i=1;i--;)
@@ -568,19 +569,26 @@ class OPUSim_RelativeSwarmOdometry
 					for(int j=0;j<robots[i].size();j++)
 					{
 						// COMPUTATION OF THETAS :
-						thetas[i].push_back( 180.0f - wTothetas*robots[i][j].x - cameraoffsetangle );
+						float thetaval =  180.0f - wTothetas*robots[i][j].x - cameraoffsetangle;
 						
-						if(thetas[i][j] < -180.0f)
+						if(thetaval < -180.0f)
 						{
-							thetas[i][j] += 360.0f;
+							thetaval += 360.0f;
 						}
-						if(thetas[i][j] > 180.0f)
+						if(thetaval > 180.0f)
 						{
-							thetas[i][j] -= 360.0f;
+							thetaval -= 360.0f;
 						}
 						
 						// COMPUTATION OF RADIUS :
-						radius[i].push_back( 1.2f*50.0f/(robots[i][j].y-offseth) );
+						//float radiusval = 1.2f*50.0f/(robots[i][j].y-offseth) + offsetcamerah;
+						float radiusval = 20.0f/(robots[i][j].y-offseth) + offsetcamerah;
+						
+						if( robots[i][j].y > offseth && radiusval > offsetcamerah)
+						{
+							radius[i].push_back( radiusval);
+							thetas[i].push_back( thetaval);
+						}
 					}
 				}
 				

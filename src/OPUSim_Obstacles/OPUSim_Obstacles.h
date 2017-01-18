@@ -444,17 +444,21 @@ class OPUSim_Obstacles
 						
 							cv::Scalar meancenter( mean(contours[i][j] ) );
 							
-							float minycont = 0.0f;
+							/**/
+							float maxycont = 0.0f;
 							for(int k=0;k<=contours[i][j].size();k++)
 							{
-								if(minycont < contours[i][j][k].y)
+								if(maxycont < contours[i][j][k].y && contours[i][j][k].y < h)
 								{
-									minycont = contours[i][j][k].y;
+									maxycont = contours[i][j][k].y;
 								}
 							}
 
-							cv::Point temp(meancenter[0], minycont);
-						
+							cv::Point temp(meancenter[0], maxycont);
+							/**/
+							/*
+							cv::Point temp(meancenter[0], meancenter[1]);
+							*/
 							float tresholdDistance = 10.0f;
 							bool duplicate = alreadyExists( temp, obstacles[i], tresholdDistance);
 						
@@ -464,7 +468,11 @@ class OPUSim_Obstacles
 							
 								if(i==0)
 								{
-									cv::circle( drawing, obstacles[i][obstacles[i].size()-1],5,cv::Scalar(200,0,50),5); 
+									if( temp.y > 0.75f*float(h)/2.0f)
+									{
+										cv::circle( drawing, obstacles[i][obstacles[i].size()-1],3,cv::Scalar(200,0,50),5); 
+										std::cout << " POINT : " << temp << std::endl;
+									}
 								}
 							}
 						
@@ -473,7 +481,6 @@ class OPUSim_Obstacles
 					}
 					else
 					{
-						//TODO : there is no other robot in the swarm...
 						noobstacles = true;
 					}
 					
@@ -507,6 +514,7 @@ class OPUSim_Obstacles
 				float cameraoffsetangle = 45.0f;
 				float wTothetas = 360.0f/float(w);
 				float offseth = float(h)/2;
+				float offsetcamerah = 0.01f;
 				float hToradius = float(h-offseth);
 			
 				for(int i=1;i--;)
@@ -514,19 +522,26 @@ class OPUSim_Obstacles
 					for(int j=0;j<obstacles[i].size();j++)
 					{
 						// COMPUTATION OF THETAS :
-						thetas[i].push_back( 180.0f - wTothetas*obstacles[i][j].x - cameraoffsetangle );
+						float thetaval =  180.0f - wTothetas*obstacles[i][j].x - cameraoffsetangle;
 						
-						if(thetas[i][j] < -180.0f)
+						if(thetaval < -180.0f)
 						{
-							thetas[i][j] += 360.0f;
+							thetaval += 360.0f;
 						}
-						if(thetas[i][j] > 180.0f)
+						if(thetaval > 180.0f)
 						{
-							thetas[i][j] -= 360.0f;
+							thetaval -= 360.0f;
 						}
 						
 						// COMPUTATION OF RADIUS :
-						radius[i].push_back( 1.2f*50.0f/(obstacles[i][j].y-offseth) );
+						//float radiusval = 1.2f*50.0f/(obstacles[i][j].y-offseth) + offsetcamerah;
+						float radiusval = 20.0f/(obstacles[i][j].y-offseth) + offsetcamerah;
+						
+						if( obstacles[i][j].y > offseth && radiusval > offsetcamerah)
+						{
+							radius[i].push_back( radiusval);
+							thetas[i].push_back( thetaval);
+						}
 					}
 				}
 				

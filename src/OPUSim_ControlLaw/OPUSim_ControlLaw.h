@@ -231,6 +231,12 @@ class MetaControlLaw
 	float tresholdDist;
 	float tresholdFarEnough;
 	
+	float kuramotoDistance;
+	float kuramotoTau;
+	bool kuramotoCurrentlyAvoiding;
+	float minObstacleDistance;
+	float obstacleAngle;
+	
 	clock_t lastClock;
 	float elapsedTime;
 	
@@ -283,6 +289,13 @@ class MetaControlLaw
 	
 	MetaControlLaw(const float& tresholdDist_ = 0.5f, const float& tresholdFarEnough_ = 2.0f, const float& tresholdDistPair_ = 1.0f) : nbrObj(0), lastClock( clock() ), needToOptimize(false), tresholdDist(tresholdDist_),currentOdometry(cv::Mat::zeros(2,1,CV_32F)), pnh(NULL), pairingToDo(false), tresholdFarEnough(tresholdFarEnough_), tresholdDistPair(tresholdDistPair_)
 	{
+	
+		this->kuramotoDistance = 0.0f;
+		this->kuramotoTau = 10.0f;
+		this->kuramotoCurrentlyAvoiding = false;
+		this->obstacleAngle = 0.0f;
+		this->minObstacleDistance = this->tresholdDist;
+		
 		this->nbrAngularIntervals = 10;
 		this->angularIntervals = cv::Mat::zeros( this->nbrAngularIntervals, 2, CV_32F);
 		//upper bounds :
@@ -311,15 +324,15 @@ class MetaControlLaw
 		this->Interval2Bias = cv::Mat::zeros( this->nbrAngularIntervals, 1, CV_32F);
 		float testBias = 0.0f;
 		this->Interval2Bias.at<float>(0,0) = 0.0f-testBias;
-		this->Interval2Bias.at<float>(0,1) = PI/12-testBias;
-		this->Interval2Bias.at<float>(0,2) = PI/12-testBias;
-		this->Interval2Bias.at<float>(0,3) = 2*PI/12-testBias;
-		this->Interval2Bias.at<float>(0,4) = 3*PI/12-testBias;
-		this->Interval2Bias.at<float>(0,5) = -3*PI/12+testBias;
-		this->Interval2Bias.at<float>(0,6) = -2*PI/12+testBias;
-		this->Interval2Bias.at<float>(0,7) = -PI/12+testBias;
-		this->Interval2Bias.at<float>(0,8) = -PI/12+testBias;
-		this->Interval2Bias.at<float>(0,9) = -0.0f+testBias;
+		this->Interval2Bias.at<float>(0,1) = -PI/12-testBias;
+		this->Interval2Bias.at<float>(0,2) = -PI/12-testBias;
+		this->Interval2Bias.at<float>(0,3) = -2*PI/12-testBias;
+		this->Interval2Bias.at<float>(0,4) = -3*PI/12-testBias;
+		this->Interval2Bias.at<float>(0,5) = 3*PI/12+testBias;
+		this->Interval2Bias.at<float>(0,6) = 2*PI/12+testBias;
+		this->Interval2Bias.at<float>(0,7) = PI/12+testBias;
+		this->Interval2Bias.at<float>(0,8) = PI/12+testBias;
+		this->Interval2Bias.at<float>(0,9) = 0.0f+testBias;
 	}
 	
 	~MetaControlLaw()
@@ -691,6 +704,8 @@ class MetaControlLaw
 		this->elapsedTime = float( clock() - this->lastClock) / CLOCKS_PER_SEC ;
 		this->lastClock = clock();
 		
+		std::cout << " FREQUENCY = " << 1.0f/this->elpasedTime << " Hz." <<  std::endl;
+		
 		this->predictionSimple();
 		
 	}
@@ -988,6 +1003,181 @@ class MetaControlLaw
 	}
 	
 	
+	void optimizeKuramoto( const cv::Mat& desiredControlInput)
+	{
+		/*
+		Create the repulsion/attraction map from the positions of the obstacles retrieved by the RGBD sensor.
+		Argument(s) :
+		- desiredControlInput = desiredVelocity : vector (v,omega) of the desired control law we want the current robot to follow.
+		Output(s) :
+		- tailoredControlInput = tailoredVelocity : vector (v, omega) optimized to fulfill our objectives. 
+		*/
+		
+		if(this->needToOptimize == false)
+		{
+			this->tailoredControlInput = desiredControlInput;
+		}
+		else
+		{
+			const float& gain_=1.0f;
+			const float& offset = 0.25f*tresholdDist;
+			// offset has to be large enough otherwise we end up with true negative avoidance...
+			float R_= tresholdDist-offset;
+			float a_=-1.0f;
+			float kv_=-0.1f;
+			float kw_=0.2f;
+			float Omega_=100.0f;
+			
+			bool isThereRelevantObstacles = false;
+			float tresholdAngle = PI/4;
+			float tresholdAngular = 3*PI/8;
+			float tresholdDesiredOmegaKeepAvoiding = abs(a_*kw_*1e-1f*R_);
+			obstacleAngle = PI/2;
+			minObstacleDistance = tresholdDist+offset;
+			
+			for(int i=0;i<this->nbrObj;i++)
+			{
+				float dist = sqrt(pow( this->state.at<float>(0,i), 2) + pow( this->state.at<float>(2,i), 2))+1e-3f;
+				
+				if( dist < tresholdDist)
+				{
+					isThereRelevantObstacles = true;
+					
+					//float angleObstacle = std::atan2( this->predState.at<float>(2,i), this->predState.at<float>(0,i) ) - PI/2;
+					float angleObstacle = std::atan2( this->state.at<float>(2,i), this->state.at<float>(0,i) ) + PI;
+					while( angleObstacle > PI)
+					{
+						angleObstacle -= 2*PI;
+					}
+					while( angleObstacle < -PI)
+					{
+						angleObstacle += 2*PI;
+					}
+					
+					if( minObstacleDistance > dist)
+					{
+						minObstacleDistance = dist;
+						obstacleAngle = angleObstacle;
+					}
+					
+				}
+			}			
+			
+			if(!isThereRelevantObstacles )
+			{
+				//TODO
+				//maybe it is a false detection...
+				
+				this->tailoredControlInput = desiredControlInput;
+				this->kuramotoCurrentlyAvoiding = false;
+				
+				std::cout << " NO RELEVANT OBSTACLES TO AVOID. " << std::endl;
+				
+				return;
+			}
+			
+			std::cout << " MIN DIST OBS :: ANGLE : " << obstacleAngle * 180.0f/PI << std::endl;
+			std::cout << " MIN DIST OBS :: DIST : " << minObstacleDistance << std::endl;
+			
+			if( this->kuramotoCurrentlyAvoiding)
+			{
+				//let us check about the criterion :
+				if( abs(obstacleAngle) > tresholdAngle )
+				{
+					//if we have give or take the orientation required to avoid the obstacle :
+					float desiredOmega = desiredControlInput.at<float>(1,0);
+					std::cout << " CRITERION :: abs desired omega x treshold : " << abs(desiredOmega) << " x " << tresholdDesiredOmegaKeepAvoiding << std::endl;
+					if( abs(desiredOmega) < tresholdDesiredOmegaKeepAvoiding )
+					{
+						std::cout << " VALIDATED !!!!!! " << std::endl;
+						//if the desired rotation is the correct one with respect to the real control law,
+						//then we no longer need to avoid that obstacle :
+						this->kuramotoCurrentlyAvoiding = false;
+					}
+					else
+					{
+						//else, let us go on.
+						std::cout << " NOT VALIDATED !!!!!! " << std::endl;
+						this->kuramotoCurrentlyAvoiding = true;
+					}
+				}
+				else
+				{
+					//else, we have not got the right orientation yet, let us keep avoiding :
+					this->kuramotoCurrentlyAvoiding = true;
+				}
+			}
+						
+			if( !this->kuramotoCurrentlyAvoiding )
+			{
+				//if we are not currently avoiding, or if we just stopped :
+				// let us check about the current obstacle :
+				//if( ( obstacleAngle > 0.0f && obstacleAngle > tresholdAngle && obstacleAngle < PI-tresholdAngle ) || ( obstacleAngle < 0.0f && obstacleAngle < -tresholdAngle && obstacleAngle > -PI+tresholdAngle ) )
+				if( abs(obstacleAngle) > tresholdAngle )
+				{
+					//if the obstacle really on the side, then it is okay, we can go on with the real control law :
+					this->tailoredControlInput = desiredControlInput;
+					std::cout << " NO OBSTACLES TO AVOID :: obstacle on the side. " << std::endl;
+					this->needToOptimize = false;
+				}
+				else
+				{
+					//else, we need to avoid it : 				
+					std::cout << " OBSTACLE IS NOT ON THE SIDE, WE HAVE TO AVOID IT. ..... " << std::endl;	
+					this->kuramotoCurrentlyAvoiding = true;
+					this->needToOptimize = true;
+				}
+			}
+			
+			if(!this->needToOptimize)
+			{
+				return;
+			}
+			
+			
+			//FILTERING :
+			this->kuramotoDistance = (this->kuramotoDistance*this->kuramotoTau+minObstacleDistance)/(this->kuramotoTau+1);
+			minObstacleDistance = this->kuramotoDistance;
+			
+			//let us compute the control law with that obstacle as center :
+			//depending on the side of the obstacle, we avoid differently :
+			if( obstacleAngle > 0.0f)
+			{
+				Omega_ = -Omega_;
+				a_  = -a_;
+				kv_ = -kv_;
+				kw_ = -kw_;
+			}
+			
+			float THETA = 0.0f;
+			//it is the artificial current THETA of the robot in the obstacle-targeted reference-focused frame...
+		
+			float f = a_*minObstacleDistance*(1.0f-(minObstacleDistance*minObstacleDistance)/(R_*R_));
+			float g = Omega_;
+  
+			//----------------------------------------------------
+			
+			float v = gain_*kv_*(f*cos(THETA) + minObstacleDistance*g*sin(THETA));
+			float omega = gain_*kw_*(minObstacleDistance*g*cos(THETA) - f*sin(THETA));
+			
+			//-----------------------------------------------------
+			//----------------------------------------------------
+			//----------------------------------------------------
+			
+			this->tailoredControlInput = cv::Mat::zeros( 2, 1, CV_32F);
+			this->tailoredControlInput.at<float>(0,0) = v;
+			this->tailoredControlInput.at<float>(1,0) = omega;
+			
+		}
+		
+	}
+	
+	
+	void reset()
+	{
+		this->nbrObj = 0;
+	}
+	
 	void optimize( const cv::Mat& desiredControlInput)
 	{
 		/*
@@ -1036,7 +1226,7 @@ class MetaControlLaw
 		cloud_pub.publish(cloudmsg);
 	}
 	
-	cv::Mat run( const cv::Mat& desiredControlInput, const bool& optimize=true )
+	cv::Mat run( const cv::Mat& desiredControlInput, const bool& optimize=true, const bool& kuramoto = true )
 	{
 		/*
 		Deals with the computation of a safe velocity vector in order to fulfill the following of the desiredVelocity and the obstacle avoidance task.
@@ -1056,8 +1246,14 @@ class MetaControlLaw
 		}
 		
 		//Let us run the optimization problem :
-		this->optimizeSimple( desiredControlInput);
-		//this->optimize( desiredControlInput);
+		if( kuramoto)
+		{
+			this->optimizeKuramoto( desiredControlInput );
+		}
+		else
+		{
+			this->optimizeSimple( desiredControlInput);
+		}
 		
 		return this->tailoredControlInput;
 	}
@@ -1246,7 +1442,7 @@ class OPUSim_ControlLaw
 	//------------------------------
 	
 	
-	OPUSim_ControlLaw(const int& robot_number_, const bool& emergencyBreak_ = false, const bool& verbose_ = false, const float& gain_=4.0f, const float& R_=3.0f, const float& a_=1.0f, const float& epsilon_=10.0f, const float& kv_=0.1f, const float& kw_=0.2f, const float& Omega_=1.0f, const float& tresholdDistAccount_ = 0.6f, const float& tresholdDistFarEnough_ = 2.0f, const float& tresholdDistPair_ = 1.0f,  const float& Pang_=2e-1f, const float Iang_ = 1e-2f, const float& Plin_=2e-1f, const float Ilin_ = 1e-2f) : continuer(true), robot_number(robot_number_), R(R_), a(a_), epsilon(epsilon_), kv(kv_), kw(kw_), Omega(Omega_), gain(gain_), THETA(0.0f), r(0.0f), emergencyBreak(emergencyBreak_), verbose(verbose_),tau(10.0f),  Pang(Pang_), Iang(Iang_), Plin(Plin_), Ilin(Ilin_), tresholdDistAccount(tresholdDistAccount_)
+	OPUSim_ControlLaw(const int& robot_number_, const bool& emergencyBreak_ = false, const bool& verbose_ = false, const float& gain_=1.0f, const float& R_=2.0f, const float& a_=1.0f, const float& epsilon_=10.0f, const float& kv_=0.1f, const float& kw_=0.2f, const float& Omega_=1.0f, const float& tresholdDistAccount_ = 0.4f, const float& tresholdDistFarEnough_ = 1.0f, const float& tresholdDistPair_ = 0.2f,  const float& Pang_=10e-1f, const float Iang_ = 2e-1f, const float& Plin_=10e-1f, const float Ilin_ = 1e-1f) : continuer(true), robot_number(robot_number_), R(R_), a(a_), epsilon(epsilon_), kv(kv_), kw(kw_), Omega(Omega_), gain(gain_), THETA(0.0f), r(0.0f), emergencyBreak(emergencyBreak_), verbose(verbose_),tau(10.0f),  Pang(Pang_), Iang(Iang_), Plin(Plin_), Ilin(Ilin_), tresholdDistAccount(tresholdDistAccount_)
 	{		
 	
 		if( this->nh.hasParam("OPUSim_ControlLaw/robot_number") )
@@ -1427,8 +1623,10 @@ class OPUSim_ControlLaw
 		cv::Mat currentmsg;
 		cv::Mat currentObsmsg;
     int nbrRobotVisible = 0;
-    float v = 0.0f, outputv=0.0f;
-    float omega = 0.0f, outputomega=0.0f;
+    float v = 0.0f, metav=0.0f, outputv=0.0f;
+    float omega = 0.0f, metaomega=0.0f, outputomega=0.0f;
+    bool isDirectionSuitable = false;
+    float tresholdDirectionSuitable = 3e-1f;
     
 		mutexRES.lock();
 		while(continuer)
@@ -1499,6 +1697,7 @@ class OPUSim_ControlLaw
 				
 				if(goOnObs)
 				{
+					metacl.reset();
 					metacl.observationObs(currentObsmsg);
 				}
 								
@@ -1605,26 +1804,28 @@ class OPUSim_ControlLaw
 				//----------------------------------------------------
 				//COMPUTE META Control Law :
 				//----------------------------------------------------
-				/*
+				
 				cv::Mat desiredControlInput = cv::Mat::zeros( 2,1, CV_32F);
 				desiredControlInput.at<float>(0,0) = v;
 				desiredControlInput.at<float>(1,0) = omega;
 				
 				
 				//filtering that prevent obstacles to become hurdles to the correct orientation of the robot...
-				bool optimize = false;
+				bool optimize = true;
 				
 				cv::Mat tailoredControlInput( this->metacl.run( desiredControlInput, optimize) );
-				v = tailoredControlInput.at<float>(0,0);
-				omega = tailoredControlInput.at<float>(1,0);
-				*/
+				metav = tailoredControlInput.at<float>(0,0);
+				metaomega = tailoredControlInput.at<float>(1,0);
+				
 				//----------------------------------------------------
 				//----------------------------------------------------
 				
 				if(this->emergencyBreak)
 				{
-					v= 0.0f;
-					omega=0.0f;
+					//v= 0.0f;
+					//omega=0.0f;
+					metav=0.0f;
+					metaomega=0.0f;
 				}	
 				
 				/*-------------------------------------------------------*/
@@ -1637,9 +1838,24 @@ class OPUSim_ControlLaw
 				//observe velocity :
 				float currentv = -this->currentVel.linear.x;
 				float currentomega = this->currentVel.angular.z;
-				float errorv = v-currentv;
-				float erroromega = omega-currentomega;
+				//float errorv = v-currentv;
+				//float erroromega = omega-currentomega;
+				float errorv = metav-currentv;
+				float erroromega = metaomega-currentomega;
 				
+				//TODO : find how to use it ...
+				/*
+				if( abs(erroromega)/metaomega > tresholdDirectionSuitable)
+				{
+					isDirectionSuitable = false;
+					std::cout << " DIRECTION NOT SUITABLE :: NO LINEAR VELOCITY !!!! " << std::endl;
+				}
+				else
+				{
+					isDirectionSuitable = true;
+				}
+				*/
+				isDirectionSuitable = true;
 				
 				cv::Mat odo = cv::Mat::zeros(2,1,CV_32F);
 				odo.at<float>(0,0) = currentv;
@@ -1650,20 +1866,33 @@ class OPUSim_ControlLaw
 				
 				/*-------------------------------------------------------*/
 				
-				this->pidlin.setConsigne(Mat<float>(v,1,1) );
-				this->pidang.setConsigne(Mat<float>(omega,1,1) );
+				if( !isDirectionSuitable)
+				{
+					//we do not move until the direction is the correct one.
+					metav = 0.0f;
+				}
 				
-				outputv = this->pidlin.update( Mat<float>(currentv,1,1) ).get(1,1);				
-				outputomega = this->pidang.update( Mat<float>(currentomega,1,1) ).get(1,1);
+				//this->pidlin.setConsigne(Mat<float>(v,1,1) );
+				//this->pidang.setConsigne(Mat<float>(omega,1,1) );
+				this->pidlin.setConsigne(Mat<float>(metav,1,1) );
+				this->pidang.setConsigne(Mat<float>(metaomega,1,1) );
 				
-				std::cout << " PID outputs :: VxW : " << v << " x " << omega << std::endl;
+				//TODO : decide the need of PID...
+				//outputv = this->pidlin.update( Mat<float>(currentv,1,1) ).get(1,1);				
+				//outputomega = this->pidang.update( Mat<float>(currentomega,1,1) ).get(1,1);
+				outputv = metav;
+				outputomega = metaomega;
+				
+				std::cout << " PID outputs :: VxW : " << outputv << " x " << outputomega << std::endl;
 				
 				//LOGS :
 				this->rs->tadd( std::string("v error"), errorv );
 				this->rs->tadd( std::string("omega error"), erroromega );
 				
-				this->rs->tadd( std::string("v consigne"), v );
-				this->rs->tadd( std::string("omega consigne"), omega );
+				//this->rs->tadd( std::string("v consigne"), v );
+				//this->rs->tadd( std::string("omega consigne"), omega );
+				this->rs->tadd( std::string("v consigne"), metav );
+				this->rs->tadd( std::string("omega consigne"), metaomega );
 				
 				this->rs->tadd( std::string("v pid"), outputv );
 				this->rs->tadd( std::string("omega pid"), outputomega );
@@ -1673,8 +1902,8 @@ class OPUSim_ControlLaw
 				
 				
 				//clipping :
-				float treshV = 2.0f;
-				float treshOmega = 2.0f;
+				float treshV = 10.0f;
+				float treshOmega = 10.0f;
 				if( abs(outputv) > treshV)
 				{
 					outputv = (outputv*treshV)/abs(outputv);
