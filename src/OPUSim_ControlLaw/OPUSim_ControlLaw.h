@@ -704,7 +704,7 @@ class MetaControlLaw
 		this->elapsedTime = float( clock() - this->lastClock) / CLOCKS_PER_SEC ;
 		this->lastClock = clock();
 		
-		std::cout << " FREQUENCY = " << 1.0f/this->elpasedTime << " Hz." <<  std::endl;
+		std::cout << " FREQUENCY = " << 1.0f/this->elapsedTime << " Hz." <<  std::endl;
 		
 		this->predictionSimple();
 		
@@ -1025,8 +1025,9 @@ class MetaControlLaw
 			float R_= tresholdDist-offset;
 			float a_=-1.0f;
 			float kv_=-0.1f;
-			float kw_=0.2f;
-			float Omega_=100.0f;
+			float kw_=0.4f;
+			//float Omega_=1.0f;
+			float Omega_=0.5f;
 			
 			bool isThereRelevantObstacles = false;
 			float tresholdAngle = PI/4;
@@ -1143,10 +1144,17 @@ class MetaControlLaw
 			//depending on the side of the obstacle, we avoid differently :
 			if( obstacleAngle > 0.0f)
 			{
-				Omega_ = -Omega_;
-				a_  = -a_;
-				kv_ = -kv_;
-				kw_ = -kw_;
+				Omega_ = -abs(Omega_);
+				a_  = abs(a_);
+				kv_ = abs(kv_);
+				kw_ = -abs(kw_);
+			}
+			else
+			{
+				Omega_ = abs(Omega_);
+				a_  = -abs(a_);
+				kv_ = -abs(kv_);
+				kw_ = abs(kw_);
 			}
 			
 			float THETA = 0.0f;
