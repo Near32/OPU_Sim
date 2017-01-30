@@ -18,6 +18,8 @@ using namespace std;
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/Pose2D.h>
 #include <geometry_msgs/PoseWithCovariance.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <nav_msgs/Path.h>
 #include <nav_msgs/Odometry.h>
 
 #include <opencv2/opencv.hpp>
@@ -1430,6 +1432,7 @@ class OPUSim_ControlLaw
 	
 	image_transport::ImageTransport* it;
 	ros::Publisher twistpub;
+	ros::Publisher pathpub;
 	image_transport::Subscriber img_sub;
 	image_transport::Subscriber obs_sub;
 	ros::Subscriber odometry_sub;
@@ -1439,6 +1442,7 @@ class OPUSim_ControlLaw
 	geometry_msgs::Pose2D goToGoalPose;
 	geometry_msgs::Pose2D currentPose;
 	geometry_msgs::Twist currentVel;
+	nav_msgs::Path pathmsg;
 	
 	
 	public :
@@ -1483,14 +1487,15 @@ class OPUSim_ControlLaw
 		std::string pathSUB(path+"RSO");
 		std::string pathSUB_OBS(path+"OBSTACLES");
 		std::string pathPUB(path+"cmd_vel");
+		std::string pathpathPUB(path+"PATH");
 		std::string pathOdometrySUB( path+"odom_diffdrive");
 		
 		img_sub = it->subscribe( pathSUB.c_str(), 1, &OPUSim_ControlLaw::callback,this);
 		obs_sub = it->subscribe( pathSUB_OBS.c_str(), 1, &OPUSim_ControlLaw::callbackOBS,this);
 		odometry_sub = nh.subscribe( pathOdometrySUB.c_str(), 1, &OPUSim_ControlLaw::callbackOdometry, this);
 		twistpub = nh.advertise<geometry_msgs::Twist>( pathPUB.c_str(), 10);
-		
-		
+		pathpub = nh.advertise<nav_msgs::Path>( pathpathPUB.c_str(), 10);
+		pathmsg.header.frame_id="map";
 		/*-------------------------------------------*/
 		/*-------------------------------------------*/
 		/*-------------------------------------------*/
@@ -1610,7 +1615,11 @@ class OPUSim_ControlLaw
 		//------------------------------
 		//------------------------------
 		
+		geometry_msgs::PoseStamped posest;
+		posest.pose = currentpose;
+		this->pathmsg.poses.push_back(posest);
 		
+		this->pathpub.publish(this->pathmsg);
 		
 		
 		mutexRES.lock();
