@@ -30,7 +30,7 @@ int main(int argc, char* argv[])
 		gain_ = atof(argv[4]);
 	}
 	
-	float R_=1.0f;
+	float R_=1.5f;
 	if(argc>5)
 	{
 		R_ = atof(argv[5]);
