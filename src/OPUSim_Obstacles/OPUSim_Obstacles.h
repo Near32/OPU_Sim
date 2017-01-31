@@ -446,7 +446,7 @@ class OPUSim_Obstacles
 						
 							cv::Scalar meancenter( mean(contours[i][j] ) );
 							
-							/**/
+							/*
 							float maxycont = 0.0f;
 							for(int k=0;k<=contours[i][j].size();k++)
 							{
@@ -457,10 +457,10 @@ class OPUSim_Obstacles
 							}
 
 							cv::Point temp(meancenter[0], maxycont);
-							/**/
-							/*
-							cv::Point temp(meancenter[0], meancenter[1]);
 							*/
+							/**/
+							cv::Point temp(meancenter[0], meancenter[1]);
+							/**/
 							float tresholdDistance = 10.0f;
 							bool duplicate = alreadyExists( temp, obstacles[i], tresholdDistance);
 						
