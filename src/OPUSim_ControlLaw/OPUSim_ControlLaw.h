@@ -1022,12 +1022,12 @@ class MetaControlLaw
 		else
 		{
 			const float& gain_=1.0f;
-			const float& offset = 0.25f*tresholdDist;
+			const float& offset = 0.5f*tresholdDist;
 			// offset has to be large enough otherwise we end up with true negative avoidance...
 			float R_= tresholdDist-offset;
 			float a_=-1.0f;
-			float kv_=-0.1f;
-			float kw_=0.1f;
+			float kv_=-1.1f;
+			float kw_=1.1f;
 			//float Omega_=1.0f;
 			float Omega_=0.5f;
 			
