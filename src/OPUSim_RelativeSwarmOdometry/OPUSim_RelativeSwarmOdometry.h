@@ -450,7 +450,7 @@ class OPUSim_RelativeSwarmOdometry
 						
 							cv::Scalar meancenter( mean(contours[i][j] ) );
 
-							/*
+							/**/
 							float minycont = 0.0f;
 							for(int k=0;k<=contours[i][j].size();k++)
 							{
@@ -461,10 +461,10 @@ class OPUSim_RelativeSwarmOdometry
 							}
 
 							cv::Point temp(meancenter[0], minycont);
-							*/
-							
+							/**/
+							/*
 							cv::Point temp(meancenter[0], meancenter[1]);
-							
+							*/
 							float tresholdDistance = 10.0f;
 							bool duplicate = alreadyExists( temp, robots[i], tresholdDistance);
 						

@@ -1028,8 +1028,8 @@ class MetaControlLaw
 			float a_=-1.0f;
 			float kv_=-0.1f;
 			float kw_=0.4f;
-			float Omega_=1.0f;
-			//float Omega_=0.5f;
+			//float Omega_=1.0f;
+			float Omega_=0.5f;
 			
 			bool isThereRelevantObstacles = false;
 			float tresholdAngle = 3*PI/8;
