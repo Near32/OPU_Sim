@@ -1032,7 +1032,7 @@ class MetaControlLaw
 			float Omega_=0.5f;
 			
 			bool isThereRelevantObstacles = false;
-			float tresholdAngle = PI/4;
+			float tresholdAngle = 3*PI/8;
 			float tresholdAngular = 3*PI/8;
 			float tresholdDesiredOmegaKeepAvoiding = abs(a_*kw_*1e-1f*R_);
 			obstacleAngle = PI/2;
@@ -1500,12 +1500,30 @@ class OPUSim_ControlLaw
 		{
 			this->nh.getParam(pathvar.c_str(),this->kv);
 		}
-			
+		
 		std::cout << "kv : " << this->kv << std::endl;
+		
+		pathvar = "OPUSim_ControlLaw_"+std::to_string(this->robot_number)+"/epsilon";
+		if( this->nh.hasParam(pathvar.c_str()) )
+		{
+			this->nh.getParam(pathvar.c_str(),this->epsilon);
+		}
+		
+		std::cout << "epsilon : " << this->epsilon << std::endl;
+		
+		
+		pathvar = "OPUSim_ControlLaw_"+std::to_string(this->robot_number)+"/Omega";
+		if( this->nh.hasParam(pathvar.c_str()) )
+		{
+			this->nh.getParam(pathvar.c_str(),this->Omega);
+		}
+		
+		std::cout << "Omega : " << this->Omega << std::endl;
+			
+		this->kw = abs(this->kw)*(this->Omega/abs(this->Omega));
 		
 		std::cout << "kw : " << this->kw << std::endl;
 		
-		std::cout << "epsilon : " << this->epsilon << std::endl;
 		
 		std::cout << "R : " << this->R << std::endl;
 		
