@@ -189,15 +189,17 @@ class OPUSim_Obstacles
 	
 	OPUSim_Obstacles(const int& robot_number_, const int& method_ = 0, const bool& verbose_ = false, const int& low_r_=0, const int& low_g_=30, const int& low_b_=0, const int& high_r_=50, const int& high_g_=255, const int& high_b_=50 ) : continuer(true), robot_number(robot_number_), method(method_),scaler(1),noobstacles(true), verbose(verbose_), pushing(false)
 	{			
-		if( this->nh.hasParam("OPUSim_Obstacles/robot_number") )
+		std::string pathvar = "OPUSim_Obstacles_"+std::to_string(this->robot_number)+"/robot_number";
+		if( this->nh.hasParam(pathvar.c_str()) )
 		{
-			this->nh.getParam("OPUSim_Obstacles/robot_number",this->robot_number);
+			this->nh.getParam(pathvar.c_str(),this->robot_number);
 		}
 		
-		if( this->nh.hasParam("OPUSim_Obstacles/debug") )
+		pathvar = "OPUSim_Obstacles_"+std::to_string(this->robot_number)+"/debug";
+		if( this->nh.hasParam(pathvar.c_str()) )
 		{
 			int verbose;
-			this->nh.getParam("OPUSim_Obstacles/debug",verbose);
+			this->nh.getParam(pathvar.c_str(),verbose);
 			this->verbose = (verbose==1?true:false);
 		}
 	

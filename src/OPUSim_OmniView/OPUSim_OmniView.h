@@ -57,9 +57,10 @@ class OPUSim_OmniView
 	
 	OPUSim_OmniView(const int& robot_number_, const int& method_ = 0 ) : continuer(true), robot_number(robot_number_), method(method_), scaler(1)
 	{			
-		if( this->nh.hasParam("OPUSim_OmniView/robot_number") )
+		std::string pathvar = "OPUSim_OmniView_"+std::to_string(this->robot_number)+"/robot_number";
+		if( this->nh.hasParam(pathvar.c_str()) )
 		{
-			this->nh.getParam("OPUSim_OmniView/robot_number",this->robot_number);
+			this->nh.getParam(pathvar.c_str(),this->robot_number);
 		}
 				
 		for(int i=4;i--;)	
@@ -67,7 +68,6 @@ class OPUSim_OmniView
 			frames.push_back( std::vector<cv::Mat>() );
 			//frameProcessed.push_back( cv::Mat() );
 		}
-		
 		
 		it = new image_transport::ImageTransport(nh);
 		

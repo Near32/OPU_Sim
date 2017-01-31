@@ -706,7 +706,7 @@ class MetaControlLaw
 		this->elapsedTime = float( clock() - this->lastClock) / CLOCKS_PER_SEC ;
 		this->lastClock = clock();
 		
-		std::cout << " FREQUENCY = " << 1.0f/this->elapsedTime << " Hz." <<  std::endl;
+		//std::cout << " FREQUENCY = " << 1.0f/this->elapsedTime << " Hz." <<  std::endl;
 		
 		this->predictionSimple();
 		
@@ -1457,24 +1457,58 @@ class OPUSim_ControlLaw
 	OPUSim_ControlLaw(const int& robot_number_, const bool& emergencyBreak_ = false, const bool& verbose_ = false, const float& gain_=1.0f, const float& R_=2.0f, const float& a_=1.0f, const float& epsilon_=10.0f, const float& kv_=0.1f, const float& kw_=0.2f, const float& Omega_=1.0f, const float& tresholdDistAccount_ = 0.4f, const float& tresholdDistFarEnough_ = 1.0f, const float& tresholdDistPair_ = 0.2f,  const float& Pang_=10e-1f, const float Iang_ = 2e-1f, const float& Plin_=10e-1f, const float Ilin_ = 1e-1f) : continuer(true), robot_number(robot_number_), R(R_), a(a_), epsilon(epsilon_), kv(kv_), kw(kw_), Omega(Omega_), gain(gain_), THETA(0.0f), r(0.0f), emergencyBreak(emergencyBreak_), verbose(verbose_),tau(10.0f),  Pang(Pang_), Iang(Iang_), Plin(Plin_), Ilin(Ilin_), tresholdDistAccount(tresholdDistAccount_)
 	{		
 	
-		if( this->nh.hasParam("OPUSim_ControlLaw/robot_number") )
+		std::string pathvar = "OPUSim_ControlLaw_"+std::to_string(this->robot_number)+"/robot_number";
+		if( this->nh.hasParam(pathvar.c_str()) )
 		{
-			this->nh.getParam("OPUSim_ControlLaw/robot_number",this->robot_number);
+			this->nh.getParam(pathvar.c_str(),this->robot_number);
 		}
 		
-		if( this->nh.hasParam("OPUSim_ControlLaw/emergencyBreak") )
+		std::cout << "robot number : " << this->robot_number << std::endl;
+		
+		pathvar = "OPUSim_ControlLaw_"+std::to_string(this->robot_number)+"/emergencyBreak";
+		if( this->nh.hasParam(pathvar.c_str()) )
 		{
 			int eb;
-			this->nh.getParam("OPUSim_ControlLaw/emergencyBreak",eb);
+			this->nh.getParam(pathvar.c_str(),eb);
 			this->emergencyBreak = (eb==1?true:false);
 		}
-		
-		if( this->nh.hasParam("OPUSim_ControlLaw/tresholdDistAccount") )
+		else
 		{
-			this->nh.getParam("OPUSim_ControlLaw/tresholdDistAccount", this->tresholdDistAccount);
+			std::cout << pathvar << " : not found..." << std::endl;
 		}
 		
+		std::cout << "emergency break : " << this->emergencyBreak << std::endl;
+		
+		pathvar = "OPUSim_ControlLaw_"+std::to_string(this->robot_number)+"/tresholdDistAccount";
+		if( this->nh.hasParam(pathvar.c_str()) )
+		{
+			this->nh.getParam(pathvar.c_str(),this->tresholdDistAccount);
+		}
+		
+		std::cout << "tresholdDistAccount : " << this->tresholdDistAccount << std::endl;
+		
+		pathvar = "OPUSim_ControlLaw_"+std::to_string(this->robot_number)+"/a";
+		if( this->nh.hasParam(pathvar.c_str()) )
+		{
+			this->nh.getParam(pathvar.c_str(),this->a);
+		}
+		
+		std::cout << "a : " << this->a << std::endl;
+		
+		pathvar = "OPUSim_ControlLaw_"+std::to_string(this->robot_number)+"/kv";
+		if( this->nh.hasParam(pathvar.c_str()) )
+		{
+			this->nh.getParam(pathvar.c_str(),this->kv);
+		}
 			
+		std::cout << "kv : " << this->kv << std::endl;
+		
+		std::cout << "kw : " << this->kw << std::endl;
+		
+		std::cout << "epsilon : " << this->epsilon << std::endl;
+		
+		std::cout << "R : " << this->R << std::endl;
+		
 		it = new image_transport::ImageTransport(nh);
 		
 		this->metacl.setPNH( &(this->nh), this->robot_number );
@@ -1900,7 +1934,7 @@ class OPUSim_ControlLaw
 				outputv = metav;
 				outputomega = metaomega;
 				
-				std::cout << " PID outputs :: VxW : " << outputv << " x " << outputomega << std::endl;
+				//std::cout << " PID outputs :: VxW : " << outputv << " x " << outputomega << std::endl;
 				
 				//LOGS :
 				this->rs->tadd( std::string("v error"), errorv );

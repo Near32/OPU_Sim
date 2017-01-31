@@ -193,15 +193,17 @@ class OPUSim_RelativeSwarmOdometry
 	
 	OPUSim_RelativeSwarmOdometry(const int& robot_number_, const int& method_ = 0, const bool& verbose_ = false ) : continuer(true), robot_number(robot_number_), method(method_),scaler(1),notarget(true),noneighbours(true), verbose(verbose_), pushing(false)
 	{			
-		if( this->nh.hasParam("OPUSim_RelativeSwarmOdometry/robot_number") )
+		std::string pathvar = "OPUSim_RelativeSwarmOdometry_"+std::to_string(this->robot_number)+"/robot_number";
+		if( this->nh.hasParam(pathvar.c_str()) )
 		{
-			this->nh.getParam("OPUSim_RelativeSwarmOdometry/robot_number",this->robot_number);
+			this->nh.getParam(pathvar.c_str(),this->robot_number);
 		}
 		
-		if( this->nh.hasParam("OPUSim_RelativeSwarmOdometry/debug") )
+		pathvar = "OPUSim_RelativeSwarmOdometry_"+std::to_string(this->robot_number)+"/debug";
+		if( this->nh.hasParam(pathvar.c_str()) )
 		{
 			int verbose;
-			this->nh.getParam("OPUSim_RelativeSwarmOdometry/debug",verbose);
+			this->nh.getParam(pathvar.c_str(),verbose);
 			this->verbose = (verbose==1?true:false);
 		}
 		
@@ -448,7 +450,7 @@ class OPUSim_RelativeSwarmOdometry
 						
 							cv::Scalar meancenter( mean(contours[i][j] ) );
 
-							
+							/*
 							float minycont = 0.0f;
 							for(int k=0;k<=contours[i][j].size();k++)
 							{
@@ -459,7 +461,10 @@ class OPUSim_RelativeSwarmOdometry
 							}
 
 							cv::Point temp(meancenter[0], minycont);
-						
+							*/
+							
+							cv::Point temp(meancenter[0], meancenter[1]);
+							
 							float tresholdDistance = 10.0f;
 							bool duplicate = alreadyExists( temp, robots[i], tresholdDistance);
 						
@@ -589,6 +594,14 @@ class OPUSim_RelativeSwarmOdometry
 							radius[i].push_back( radiusval);
 							thetas[i].push_back( thetaval);
 						}
+						else
+						{
+							//let us account for the target :
+							if(j==robots[i].size()-1)
+							{
+								notarget = true;
+							}
+						}
 					}
 				}
 				
@@ -606,8 +619,12 @@ class OPUSim_RelativeSwarmOdometry
 						cvthetatarget.at<float>(0,0) = thetas[0][targetIDX[0]];
 						cvradiustarget.at<float>(0,0) = radius[0][targetIDX[0]];
 						
-						thetas[0].erase(thetas[0].begin()+targetIDX[0]);
-						radius[0].erase(radius[0].begin()+targetIDX[0]);
+						//thetas[0].erase(thetas[0].begin()+targetIDX[0]);
+						//radius[0].erase(radius[0].begin()+targetIDX[0]);
+						// if there is a target, then, however the formulation, it is the last one :
+						thetas[0].erase(thetas[0].begin()+thetas[0].size()-1);
+						radius[0].erase(radius[0].begin()+radius[0].size()-1);
+						
 						
 						cv::vconcat( cvradiustarget, cvthetatarget, targetpolar);
 				

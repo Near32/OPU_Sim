@@ -4,29 +4,38 @@
 	<arg name="debugObstacles" default="0" doc="Verbose Debugging for OPUSim_Obstacles."/>
 	<arg name="debugRSO" default="0" doc="Verbose Debugging for OPUSim_RelativeSwarmOdometry."/>
 	
-	<arg name="emergencyBreak" default="0" doc="Everything will be launched except that the cmd_vel-related topic is publishing 0."/>
+	<arg name="emergencyBreak" default="1" doc="Everything will be launched except that the cmd_vel-related topic is publishing 0."/>
 	<arg name="tresholdDistAccount" default="0.6" doc="Treshold for the distance of obstacles that we take into account for obstacle avoidance."/>
+	<arg name="a" default="-1.0" doc="coefficient : negative when N lesser than 2."/>
+	<arg name="kv" default="-0.1" doc="coefficient to the radial velocity : negative when N lesser than 2."/>
 	
 	
-	<node pkg="OPUSim" type="OPUSim_OmniView" name="OPUSim_OmniView">
+	<node pkg="OPUSim" type="OPUSim_OmniView" name="OPUSim_OmniView_$(arg robot_number)" args="$(arg robot_number)" respawn="true">
 		<rosparam param="robot_number" subst_value="True">$(arg robot_number)</rosparam>
 	</node>
 	
-	<node pkg="OPUSim" type="OPUSim_Obstacles" name="OPUSim_Obstacles">
+	<node pkg="OPUSim" type="OPUSim_Obstacles" name="OPUSim_Obstacles_$(arg robot_number)" args="$(arg robot_number)" respawn="true">
 		<rosparam param="robot_number" subst_value="True">$(arg robot_number)</rosparam> 
 		<rosparam param="debug" subst_value="True">$(arg debugObstacles)</rosparam> 
 	</node>
 	
-	<node pkg="OPUSim" type="OPUSim_RelativeSwarmOdometry" name="OPUSim_RelativeSwarmOdometry">
+	<!---->
+	<node pkg="OPUSim" type="OPUSim_RelativeSwarmOdometry" name="OPUSim_RelativeSwarmOdometry_$(arg robot_number)" args="$(arg robot_number)" launch-prefix="xterm -e gdb --args" respawn="false">
+	<!---->
+	<!--
+	<node pkg="OPUSim" type="OPUSim_RelativeSwarmOdometry" name="OPUSim_RelativeSwarmOdometry_$(arg robot_number)" args="$(arg robot_number)" respawn="true">
+	-->
 		<rosparam param="robot_number" subst_value="True">$(arg robot_number)</rosparam> 
 		<rosparam param="debug" subst_value="True">$(arg debugRSO)</rosparam> 
 	</node>
 	
 	<!---->
-	<node pkg="OPUSim" type="OPUSim_ControlLaw" name="OPUSim_ControlLaw">
+	<node pkg="OPUSim" type="OPUSim_ControlLaw" name="OPUSim_ControlLaw_$(arg robot_number)" args="$(arg robot_number)" respawn="true">
 		<rosparam param="robot_number" subst_value="True">$(arg robot_number)</rosparam>
 		<rosparam param="emergencyBreak" subst_value="True">$(arg emergencyBreak)</rosparam>
 		<rosparam param="tresholdDistAccount" subst_value="True">$(arg tresholdDistAccount)</rosparam>
+		<rosparam param="a" subst_value="True">$(arg a)</rosparam>
+		<rosparam param="kv" subst_value="True">$(arg kv)</rosparam>
 	</node>
 	<!---->
 	
