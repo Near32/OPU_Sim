@@ -1027,7 +1027,7 @@ class MetaControlLaw
 			float R_= tresholdDist-offset;
 			float a_=-1.0f;
 			float kv_=-0.1f;
-			float kw_=0.4f;
+			float kw_=0.1f;
 			//float Omega_=1.0f;
 			float Omega_=0.5f;
 			
