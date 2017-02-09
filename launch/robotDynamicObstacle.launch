@@ -4,16 +4,16 @@
 	<arg name="debugObstacles" default="0" doc="Verbose Debugging for OPUSim_Obstacles."/>
 	<arg name="debugRSO" default="0" doc="Verbose Debugging for OPUSim_RelativeSwarmOdometry."/>
 	
-	<arg name="emergencyBreak" default="0" doc="Everything will be launched except that the cmd_vel-related topic is publishing 0."/>
-	<arg name="tresholdDistAccount" default="0.6" doc="Treshold for the distance of obstacles that we take into account for obstacle avoidance."/>
-	<arg name="a" default="1.0" doc="coefficient : negative when N lesser than 2."/>
-	<arg name="kv" default="0.1" doc="coefficient to the radial velocity : negative when N lesser than 2."/>
+	<arg name="emergencyBreak" default="1" doc="Everything will be launched except that the cmd_vel-related topic is publishing 0."/>
+	<arg name="tresholdDistAccount" default="0.25" doc="Treshold for the distance of obstacles that we take into account for obstacle avoidance."/>
+	<arg name="a" default="-1.0" doc="coefficient : negative when N lesser than 2."/>
+	<arg name="kv" default="-0.1" doc="coefficient to the radial velocity : negative when N lesser than 2."/>
 	<!--
 	<arg name="kw" default="0.2" doc="coefficient to the amgular velocity : negative when Omega is negative."/>
 	-->
 	<arg name="R" default="1.0" doc="desired radius of the trajectory circle."/>
-	<arg name="epsilon" default="-1.0" doc="coupling strength : negative when N lesser or equal to 2."/>
-	<arg name="Omega" default="2.0" doc="natural frequency."/>
+	<arg name="epsilon" default="10.0" doc="coupling strength : negative when N lesser or equal to 2."/>
+	<arg name="Omega" default="-1.0" doc="natural frequency."/>
 	
 	
 	<node pkg="OPUSim" type="OPUSim_OmniView" name="OPUSim_OmniView_$(arg robot_number)" args="$(arg robot_number)" respawn="true">
@@ -32,18 +32,18 @@
 	<!--
 	<node pkg="OPUSim" type="OPUSim_RelativeSwarmOdometry" name="OPUSim_RelativeSwarmOdometry_$(arg robot_number)" args="$(arg robot_number)" launch-prefix="xterm -e gdb double hyphen args" respawn="false">
 	-->
-	<!---->
+	<!--
 	<node pkg="OPUSim" type="OPUSim_RelativeSwarmOdometry" name="OPUSim_RelativeSwarmOdometry_$(arg robot_number)" args="$(arg robot_number)" respawn="true">
-	<!---->
+	--><!--
 		<rosparam param="robot_number" subst_value="True">$(arg robot_number)</rosparam> 
 		<rosparam param="debug" subst_value="True">$(arg debugRSO)</rosparam> 
 	</node>
-	
+	-->
 	<!--
-	<node pkg="OPUSim" type="OPUSim_ControlLaw" name="OPUSim_ControlLaw_$(arg robot_number)" args="$(arg robot_number)" launch-prefix="xterm -e gdb dh args" respawn="false">
+	<node pkg="OPUSim" type="OPUSim_ControlLawDynamicObstacle" name="OPUSim_ControlLawDynamicObstacle_$(arg robot_number)" args="$(arg robot_number)" launch-prefix="xterm -e gdb args" respawn="false">
 	-->
 	<!---->
-	<node pkg="OPUSim" type="OPUSim_ControlLaw" name="OPUSim_ControlLaw_$(arg robot_number)" args="$(arg robot_number)" respawn="true">
+	<node pkg="OPUSim" type="OPUSim_ControlLawDynamicObstacle" name="OPUSim_ControlLawDynamicObstacle_$(arg robot_number)" args="$(arg robot_number)" respawn="true">
 	
 		<rosparam param="robot_number" subst_value="True">$(arg robot_number)</rosparam>
 		<rosparam param="emergencyBreak" subst_value="True">$(arg emergencyBreak)</rosparam>

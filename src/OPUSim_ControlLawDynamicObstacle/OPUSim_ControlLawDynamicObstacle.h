@@ -1402,7 +1402,7 @@ class MetaControlLaw
 
 
 
-class OPUSim_ControlLaw
+class OPUSim_ControlLawDynamicObstacle
 {
 	protected :
 	
@@ -1454,6 +1454,8 @@ class OPUSim_ControlLaw
 	geometry_msgs::Twist currentVel;
 	nav_msgs::Path pathmsg;
 	
+	std::vector<geometry_msgs::Pose2D> goals;
+	int idxGoal;
 	
 	public :
 	
@@ -1464,10 +1466,10 @@ class OPUSim_ControlLaw
 	//------------------------------
 	
 	
-	OPUSim_ControlLaw(const int& robot_number_, const bool& emergencyBreak_ = false, const bool& verbose_ = false, const float& gain_=1.0f, const float& R_=2.0f, const float& a_=1.0f, const float& epsilon_=10.0f, const float& kv_=0.1f, const float& kw_=0.2f, const float& Omega_=1.0f, const float& tresholdDistAccount_ = 0.4f, const float& tresholdDistFarEnough_ = 1.0f, const float& tresholdDistPair_ = 0.2f,  const float& Pang_=10e-1f, const float Iang_ = 2e-1f, const float& Plin_=10e-1f, const float Ilin_ = 1e-1f) : continuer(true), robot_number(robot_number_), R(R_), a(a_), epsilon(epsilon_), kv(kv_), kw(kw_), Omega(Omega_), gain(gain_), THETA(0.0f), r(0.0f), emergencyBreak(emergencyBreak_), verbose(verbose_),tau(10.0f),  Pang(Pang_), Iang(Iang_), Plin(Plin_), Ilin(Ilin_), tresholdDistAccount(tresholdDistAccount_)
+	OPUSim_ControlLawDynamicObstacle(const int& robot_number_, const bool& emergencyBreak_ = false, const bool& verbose_ = false, const float& gain_=1.0f, const float& R_=2.0f, const float& a_=1.0f, const float& epsilon_=10.0f, const float& kv_=0.1f, const float& kw_=0.2f, const float& Omega_=1.0f, const float& tresholdDistAccount_ = 0.4f, const float& tresholdDistFarEnough_ = 1.0f, const float& tresholdDistPair_ = 0.2f,  const float& Pang_=3e-3f, const float Iang_ = 1e-4f, const float& Plin_=1e-3f, const float Ilin_ = 0e-3f) : continuer(true), robot_number(robot_number_), R(R_), a(a_), epsilon(epsilon_), kv(kv_), kw(kw_), Omega(Omega_), gain(gain_), THETA(0.0f), r(0.0f), emergencyBreak(emergencyBreak_), verbose(verbose_),tau(10.0f),  Pang(Pang_), Iang(Iang_), Plin(Plin_), Ilin(Ilin_), tresholdDistAccount(tresholdDistAccount_)
 	{		
 	
-		std::string pathvar = "OPUSim_ControlLaw_"+std::to_string(this->robot_number)+"/robot_number";
+		std::string pathvar = "OPUSim_ControlLawDynamicObstacle_"+std::to_string(this->robot_number)+"/robot_number";
 		if( this->nh.hasParam(pathvar.c_str()) )
 		{
 			this->nh.getParam(pathvar.c_str(),this->robot_number);
@@ -1475,7 +1477,7 @@ class OPUSim_ControlLaw
 		
 		std::cout << "robot number : " << this->robot_number << std::endl;
 		
-		pathvar = "OPUSim_ControlLaw_"+std::to_string(this->robot_number)+"/emergencyBreak";
+		pathvar = "OPUSim_ControlLawDynamicObstacle_"+std::to_string(this->robot_number)+"/emergencyBreak";
 		if( this->nh.hasParam(pathvar.c_str()) )
 		{
 			int eb;
@@ -1489,7 +1491,7 @@ class OPUSim_ControlLaw
 		
 		std::cout << "emergency break : " << this->emergencyBreak << std::endl;
 		
-		pathvar = "OPUSim_ControlLaw_"+std::to_string(this->robot_number)+"/tresholdDistAccount";
+		pathvar = "OPUSim_ControlLawDynamicObstacle_"+std::to_string(this->robot_number)+"/tresholdDistAccount";
 		if( this->nh.hasParam(pathvar.c_str()) )
 		{
 			this->nh.getParam(pathvar.c_str(),this->tresholdDistAccount);
@@ -1497,7 +1499,7 @@ class OPUSim_ControlLaw
 		
 		std::cout << "tresholdDistAccount : " << this->tresholdDistAccount << std::endl;
 		
-		pathvar = "OPUSim_ControlLaw_"+std::to_string(this->robot_number)+"/a";
+		pathvar = "OPUSim_ControlLawDynamicObstacle_"+std::to_string(this->robot_number)+"/a";
 		if( this->nh.hasParam(pathvar.c_str()) )
 		{
 			this->nh.getParam(pathvar.c_str(),this->a);
@@ -1505,7 +1507,7 @@ class OPUSim_ControlLaw
 		
 		std::cout << "a : " << this->a << std::endl;
 		
-		pathvar = "OPUSim_ControlLaw_"+std::to_string(this->robot_number)+"/kv";
+		pathvar = "OPUSim_ControlLawDynamicObstacle_"+std::to_string(this->robot_number)+"/kv";
 		if( this->nh.hasParam(pathvar.c_str()) )
 		{
 			this->nh.getParam(pathvar.c_str(),this->kv);
@@ -1513,7 +1515,7 @@ class OPUSim_ControlLaw
 		
 		std::cout << "kv : " << this->kv << std::endl;
 		
-		pathvar = "OPUSim_ControlLaw_"+std::to_string(this->robot_number)+"/epsilon";
+		pathvar = "OPUSim_ControlLawDynamicObstacle_"+std::to_string(this->robot_number)+"/epsilon";
 		if( this->nh.hasParam(pathvar.c_str()) )
 		{
 			this->nh.getParam(pathvar.c_str(),this->epsilon);
@@ -1522,7 +1524,7 @@ class OPUSim_ControlLaw
 		std::cout << "epsilon : " << this->epsilon << std::endl;
 		
 		
-		pathvar = "OPUSim_ControlLaw_"+std::to_string(this->robot_number)+"/Omega";
+		pathvar = "OPUSim_ControlLawDynamicObstacle_"+std::to_string(this->robot_number)+"/Omega";
 		if( this->nh.hasParam(pathvar.c_str()) )
 		{
 			this->nh.getParam(pathvar.c_str(),this->Omega);
@@ -1534,7 +1536,7 @@ class OPUSim_ControlLaw
 		
 		std::cout << "kw : " << this->kw << std::endl;
 		
-		pathvar = "OPUSim_ControlLaw_"+std::to_string(this->robot_number)+"/R";
+		pathvar = "OPUSim_ControlLawDynamicObstacle_"+std::to_string(this->robot_number)+"/R";
 		if( this->nh.hasParam(pathvar.c_str()) )
 		{
 			this->nh.getParam(pathvar.c_str(),this->R);
@@ -1557,9 +1559,9 @@ class OPUSim_ControlLaw
 		std::string pathpathPUB(path+"PATH");
 		std::string pathOdometrySUB( path+"odom_diffdrive");
 		
-		img_sub = it->subscribe( pathSUB.c_str(), 1, &OPUSim_ControlLaw::callback,this);
-		obs_sub = it->subscribe( pathSUB_OBS.c_str(), 1, &OPUSim_ControlLaw::callbackOBS,this);
-		odometry_sub = nh.subscribe( pathOdometrySUB.c_str(), 1, &OPUSim_ControlLaw::callbackOdometry, this);
+		img_sub = it->subscribe( pathSUB.c_str(), 1, &OPUSim_ControlLawDynamicObstacle::callback,this);
+		obs_sub = it->subscribe( pathSUB_OBS.c_str(), 1, &OPUSim_ControlLawDynamicObstacle::callbackOBS,this);
+		odometry_sub = nh.subscribe( pathOdometrySUB.c_str(), 1, &OPUSim_ControlLawDynamicObstacle::callbackOdometry, this);
 		twistpub = nh.advertise<geometry_msgs::Twist>( pathPUB.c_str(), 10);
 		pathpub = nh.advertise<nav_msgs::Path>( pathpathPUB.c_str(), 10);
 		pathmsg.header.frame_id="map";
@@ -1580,19 +1582,38 @@ class OPUSim_ControlLaw
 		this->goToGoalPose.theta = 0.0f;
 		
 		this->currentPose = this->goToGoalPose;
+		
+		this->goals.push_back(this->goToGoalPose);
+		this->goToGoalPose.x = 3.0f;
+		this->goals.push_back(this->goToGoalPose);
+		this->goToGoalPose.x = 0.0f;
+		this->idxGoal = 1;
+		
+		/*
+		this->Pang = 0.5f;
+		this->Iang = 0.01f;
+		this->Plin = 0.1f;
+		this->Ilin = 0.01f;
+		this->pidang.setConsigne(Mat<float>(0.0f,1,1));
+		this->pidlin.setConsigne(Mat<float>(0.0f,1,1));
+		this->pidang.setKp(this->Pang);
+		this->pidang.setKi(this->Iang);
+		this->pidlin.setKp(this->Plin);
+		this->pidlin.setKi(this->Ilin);
+		*/
 		/*-------------------------------------------*/
 		/*-------------------------------------------*/
 		/*-------------------------------------------*/
 		
-		std::string pathlog = "/home/kevin/rosbuild_ws/sandbox/logs/ControlLaw_"+std::to_string(this->robot_number)+"_datas";
+		std::string pathlog = "/home/kevin/rosbuild_ws/sandbox/logs/ControlLawDynamicObstacle_"+std::to_string(this->robot_number)+"_datas";
 		this->rs = new RunningStats<float>(pathlog, 100 );
-		this->t = new std::thread(&OPUSim_ControlLaw::loop, this);
+		this->t = new std::thread(&OPUSim_ControlLawDynamicObstacle::loop, this);
 		
 		
-		ROS_INFO( std::string("OPUSim_ControlLaw::"+std::to_string(this->robot_number)+"::Initialization : OK.").c_str() );
+		ROS_INFO( std::string("OPUSim_ControlLawDynamicObstacle::"+std::to_string(this->robot_number)+"::Initialization : OK.").c_str() );
 	}
 	
-	~OPUSim_ControlLaw()
+	~OPUSim_ControlLawDynamicObstacle()
 	{
 		
 		this->setContinuer(false);
@@ -1606,7 +1627,7 @@ class OPUSim_ControlLaw
 		delete it;
 		delete rs;
 		
-		ROS_INFO("OPUSim_ControlLaw::Exiting.");
+		ROS_INFO("OPUSim_ControlLawDynamicObstacle::Exiting.");
 	}
 	
 	void callback(const sensor_msgs::ImageConstPtr& original_image)
@@ -1620,7 +1641,7 @@ class OPUSim_ControlLaw
 		}
 		catch( cv_bridge::Exception e)
 		{
-			ROS_ERROR("OPUSim_ControlLaw::::cv_bridge exception : %s", e.what());
+			ROS_ERROR("OPUSim_ControlLawDynamicObstacle::::cv_bridge exception : %s", e.what());
 			return ;
 		}
 		//------------------------------------------------
@@ -1649,7 +1670,7 @@ class OPUSim_ControlLaw
 		}
 		catch( cv_bridge::Exception e)
 		{
-			ROS_ERROR("OPUSim_ControlLaw::::cv_bridge exception : %s", e.what());
+			ROS_ERROR("OPUSim_ControlLawDynamicObstacle::::cv_bridge exception : %s", e.what());
 			return ;
 		}
 		//------------------------------------------------
@@ -1713,6 +1734,12 @@ class OPUSim_ControlLaw
     bool isDirectionSuitable = false;
     float tresholdDirectionSuitable = 3e-1f;
     
+    bool isOrientationLocked = false;
+    bool hasReachedGoalPosition = false;
+		float tresholdErrorOrientationLocked = PI/64;
+		float tresholdErrorOrientationUNLocked = PI/64;
+		float tresholdAngularErrorAllowLinearVelocity = PI/32;
+    
 		mutexRES.lock();
 		while(continuer)
 		{
@@ -1760,7 +1787,7 @@ class OPUSim_ControlLaw
 				
 				mutexRES.unlock();
 				
-				if(true)//this->verbose)
+				if(this->verbose)
 				{
 					if(goOn)
 					{
@@ -1797,7 +1824,7 @@ class OPUSim_ControlLaw
 					//-- Angular position rearrangin in [0,2*PI] :
 				
 					//TODO : handle the state of robots and targets after filtering :
-				
+			
 					nbrRobotVisible = currentmsg.at<float>(0,0);
 					
 					this->parametersUpdate(nbrRobotVisible);
@@ -1817,7 +1844,7 @@ class OPUSim_ControlLaw
 					float sumphi = 0.0f;
 					float mintheta = 2*PI;
 				
-					if(nbrRobotVisible>=1)
+					if(nbrRobotVisible>1)
 					{
 						//let us take the minimal values of thetas :
 					
@@ -1853,33 +1880,22 @@ class OPUSim_ControlLaw
 					r = (tau-1.0f)*r/tau+rinput/tau;
 				
 				
-					// PID-controller :
-					//float P = 1.0f;
-					/*
-					float desiredPhi = PI/nbrRobotVisible;
-					float I = 0.1f;
-					this->pid.setKp(P);
-					this->pid.setKi(I);
-					Mat<float> currval( abs(desiredPhi-mintheta)/PI, 1,1);
-					float Kgain = this->pid.update( currval, 0.001).get(1,1);
-					*/
-					//float Kgain = P*abs(desiredPhi-mintheta)/PI;
-				
 					float f = this->a*r*(1.0f-(r*r)/(this->R*this->R));
 					float g = this->Omega + this->epsilon*sumphi;
 					//float g = this->Omega + this->epsilon*(1.0f+Kgain)*sumphi;
 				
-				
+			
 		      
 					//----------------------------------------------------
 					//----------------------------------------------------
 					//----------------------------------------------------
-				
+					
+					
 				
 					//float v = Kgain*this->gain*this->kv*(f*cos(THETA) + r*g*sin(THETA));
-					v = this->gain*this->kv*(f*cos(THETA) + r*g*sin(THETA));
+					//v = this->gain*this->kv*(f*cos(THETA) + r*g*sin(THETA));
 					//float omega = Kgain*this->gain*this->kw*(r*g*cos(THETA) - f*sin(THETA));
-					omega = this->gain*this->kw*(r*g*cos(THETA) - f*sin(THETA));
+					//omega = this->gain*this->kw*(r*g*cos(THETA) - f*sin(THETA));
 					
 					//LOGS :
 					this->rs->tadd( std::string("rinput nl"), rinput );
@@ -1889,6 +1905,94 @@ class OPUSim_ControlLaw
 				
 				}
 				
+				
+				/*
+				GoToGoal Control Law :
+				*/
+			
+				float xError = this->goals[this->idxGoal].x-currentPose.x;
+				float yError = this->goals[this->idxGoal].y-currentPose.y;
+			
+				float desiredTheta = std::atan2( yError, xError );
+				if( abs(yError)+abs(xError) < 5e-2f)
+				{
+					desiredTheta = this->goals[this->idxGoal].theta;
+					hasReachedGoalPosition = true;
+				
+					if(this->verbose)
+					{
+						std::cout << " ROBOT HAS REACHED GOAL POSITION." << std::endl;
+					}
+				}
+				else
+				{
+					hasReachedGoalPosition = false;
+				}
+				//regularization around -Pi;+Pi
+				while(desiredTheta > PI)	desiredTheta -= 2*PI;
+				while(desiredTheta < -PI)	desiredTheta += 2*PI;
+				while(this->currentPose.theta > PI)	this->currentPose.theta -= 2*PI;
+				while(this->currentPose.theta < -PI)	this->currentPose.theta += 2*PI;
+			
+				float thetaError = desiredTheta-this->currentPose.theta;
+				
+				while(desiredTheta > 2*PI)	desiredTheta -= 2*PI;
+				while(desiredTheta < 0.0f)	desiredTheta += 2*PI;
+				while(this->currentPose.theta > 2*PI)	this->currentPose.theta -= 2*PI;
+				while(this->currentPose.theta < 0.0f)	this->currentPose.theta += 2*PI;
+			
+				float thetaErrorBis = desiredTheta-this->currentPose.theta;
+				
+				if( abs(thetaErrorBis) < abs(thetaError))
+				{
+					thetaError = thetaErrorBis;
+				}
+				
+				std::cout << " error x dtheta x ctheta : " << thetaError << " x " << desiredTheta << " x " << currentPose.theta << std::endl;
+				std::cout << " desired goal index :: " << this->idxGoal << " xerror : " << xError << " yError : " << yError << std::endl;
+				
+				// let us handle the issue that may occur at the beginning of the goToGoal phase :
+				// when the presence of obstacles might prevent the robot from starting to move in the correct direction...
+				if(isOrientationLocked)
+				{
+					if( abs(thetaError) > tresholdErrorOrientationUNLocked )
+					{
+						isOrientationLocked = false;
+					}
+				}
+				else
+				{
+					if( abs(thetaError) < tresholdErrorOrientationLocked )
+					{
+						isOrientationLocked = true;
+					}
+				}
+				
+				if(hasReachedGoalPosition)
+				{
+					this->idxGoal = (this->idxGoal+1)%this->goals.size();
+				}
+			
+				float linearError_GoToGoal = sqrt( pow(xError,2.0f)+pow(yError,2.0f) );
+				float angularError_GoToGoal = thetaError;
+			
+				/*-------------------------------------------------------*/
+				/*-------------------------------------------------------*/
+				/*-------------------------------------------------------*/
+			
+			
+				/*
+				Filtering by the repulsion map :
+				*/
+				
+				v = linearError_GoToGoal;
+				omega = angularError_GoToGoal;
+				
+				
+				if( abs(thetaError) > tresholdAngularErrorAllowLinearVelocity )
+				{
+					v=0.0f;
+				}
 				//----------------------------------------------------
 				//COMPUTE META Control Law :
 				//----------------------------------------------------
@@ -1899,7 +2003,7 @@ class OPUSim_ControlLaw
 				
 				
 				//filtering that prevent obstacles to become hurdles to the correct orientation of the robot...
-				bool optimize = true;
+				bool optimize = false;
 				bool kuramotoUse = false;
 				
 				cv::Mat tailoredControlInput( this->metacl.run( desiredControlInput, optimize, kuramotoUse) );
@@ -2026,7 +2130,7 @@ class OPUSim_ControlLaw
 			//----------------------------------------------------
 			
 			
-			twistmsg.linear.x = -outputv;
+			twistmsg.linear.x = outputv;
 			twistmsg.linear.y = 0.0f;
 			twistmsg.linear.z = 0.0f;
 			
@@ -2062,12 +2166,11 @@ class OPUSim_ControlLaw
 	
 	void parametersUpdate(const int& nbrRobotVisible)
 	{
-		//nbr robot visible without counting itself..., nor the target.
-		// N = nbrRobotVisible+1
 		switch(nbrRobotVisible)
 		{
 			case 0 :
 			{
+				//impossible, in a correct settings...
 				this->kw = abs(this->kw) * ( this->Omega/abs(this->Omega) );
 				this->epsilon = - abs(this->epsilon) * ( this->Omega/abs(this->Omega) );
 				this->kv = - abs(this->kv) * ( this->Omega/abs(this->Omega) );
@@ -2077,28 +2180,28 @@ class OPUSim_ControlLaw
 			
 			case 1:
 			{
-				this->kw = 0.2f;//abs(this->kw) * ( this->Omega/abs(this->Omega) );
-				this->epsilon =  -1.0f;//abs(this->epsilon) * ( this->Omega/abs(this->Omega) );
-				this->kv = 0.1f;// abs(this->kv) * ( this->Omega/abs(this->Omega) );
-				this->a = 1.0f; // abs(this->a) * ( this->Omega/abs(this->Omega) );
+				this->kw = abs(this->kw) * ( this->Omega/abs(this->Omega) );
+				this->epsilon = - abs(this->epsilon) * ( this->Omega/abs(this->Omega) );
+				this->kv = - abs(this->kv) * ( this->Omega/abs(this->Omega) );
+				this->a = - abs(this->a) * ( this->Omega/abs(this->Omega) );
 			}
 			break;
 			
 			case 2:
 			{
-				this->kw = 0.2f; //abs(this->kw) * ( this->Omega/abs(this->Omega) );
-				this->epsilon = 0.5f; //abs(this->epsilon) * ( this->Omega/abs(this->Omega) );
-				this->kv = -0.1f; //- abs(this->kv) * ( this->Omega/abs(this->Omega) );
-				this->a = -1.0f; //- abs(this->a) * ( this->Omega/abs(this->Omega) );
+				this->kw = abs(this->kw) * ( this->Omega/abs(this->Omega) );
+				this->epsilon = abs(this->epsilon) * ( this->Omega/abs(this->Omega) );
+				this->kv = abs(this->kv) * ( this->Omega/abs(this->Omega) );
+				this->a = abs(this->a) * ( this->Omega/abs(this->Omega) );
 			}
 			break;
 			
 			case 3:
 			{
-				this->kw = 0.2f; //abs(this->kw) * ( this->Omega/abs(this->Omega) );
-				this->epsilon = 0.5f; //abs(this->epsilon) * ( this->Omega/abs(this->Omega) );
-				this->kv = 0.1f; //abs(this->kv) * ( this->Omega/abs(this->Omega) );
-				this->a = 1.0f; //abs(this->a) * ( this->Omega/abs(this->Omega) );
+				this->kw = abs(this->kw) * ( this->Omega/abs(this->Omega) );
+				this->epsilon = abs(this->epsilon) * ( this->Omega/abs(this->Omega) );
+				this->kv = - abs(this->kv) * ( this->Omega/abs(this->Omega) );
+				this->a = - abs(this->a) * ( this->Omega/abs(this->Omega) );
 			}
 			break;
 			

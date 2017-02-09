@@ -167,12 +167,12 @@ class RunningStats
 			{
 				if(i<(*it).second.size())
 				{
-					myfile << (*it).second[i] << " , " ;
+					myfile << (*it).second[i] << " : " ;
 					goOn = true;
 				}
 				else
 				{
-					myfile << "ENDED" << " , " ;
+					myfile << "ENDED" << " : " ;
 				}
 			}
 			
@@ -180,12 +180,12 @@ class RunningStats
 			{
 				if(i<(*sit).second.size())
 				{
-					myfile << (*sit).second[i] << " , " ;
+					myfile << (*sit).second[i] << " : " ;
 					goOn = true;
 				}
 				else
 				{
-					myfile << "ENDED" << " , " ;
+					myfile << "ENDED" << " : " ;
 				}
 			}
 			

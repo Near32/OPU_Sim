@@ -1760,7 +1760,7 @@ class OPUSim_ControlLaw
 				
 				mutexRES.unlock();
 				
-				if(true)//this->verbose)
+				if(this->verbose)
 				{
 					if(goOn)
 					{
@@ -1817,7 +1817,7 @@ class OPUSim_ControlLaw
 					float sumphi = 0.0f;
 					float mintheta = 2*PI;
 				
-					if(nbrRobotVisible>=1)
+					if(nbrRobotVisible>1)
 					{
 						//let us take the minimal values of thetas :
 					
@@ -2062,12 +2062,11 @@ class OPUSim_ControlLaw
 	
 	void parametersUpdate(const int& nbrRobotVisible)
 	{
-		//nbr robot visible without counting itself..., nor the target.
-		// N = nbrRobotVisible+1
 		switch(nbrRobotVisible)
 		{
 			case 0 :
 			{
+				//impossible, in a correct settings...
 				this->kw = abs(this->kw) * ( this->Omega/abs(this->Omega) );
 				this->epsilon = - abs(this->epsilon) * ( this->Omega/abs(this->Omega) );
 				this->kv = - abs(this->kv) * ( this->Omega/abs(this->Omega) );
@@ -2077,28 +2076,28 @@ class OPUSim_ControlLaw
 			
 			case 1:
 			{
-				this->kw = 0.2f;//abs(this->kw) * ( this->Omega/abs(this->Omega) );
-				this->epsilon =  -1.0f;//abs(this->epsilon) * ( this->Omega/abs(this->Omega) );
-				this->kv = 0.1f;// abs(this->kv) * ( this->Omega/abs(this->Omega) );
-				this->a = 1.0f; // abs(this->a) * ( this->Omega/abs(this->Omega) );
+				this->kw = abs(this->kw) * ( this->Omega/abs(this->Omega) );
+				this->epsilon = - abs(this->epsilon) * ( this->Omega/abs(this->Omega) );
+				this->kv = - abs(this->kv) * ( this->Omega/abs(this->Omega) );
+				this->a = - abs(this->a) * ( this->Omega/abs(this->Omega) );
 			}
 			break;
 			
 			case 2:
 			{
-				this->kw = 0.2f; //abs(this->kw) * ( this->Omega/abs(this->Omega) );
-				this->epsilon = 0.5f; //abs(this->epsilon) * ( this->Omega/abs(this->Omega) );
-				this->kv = -0.1f; //- abs(this->kv) * ( this->Omega/abs(this->Omega) );
-				this->a = -1.0f; //- abs(this->a) * ( this->Omega/abs(this->Omega) );
+				this->kw = abs(this->kw) * ( this->Omega/abs(this->Omega) );
+				this->epsilon = abs(this->epsilon) * ( this->Omega/abs(this->Omega) );
+				this->kv = abs(this->kv) * ( this->Omega/abs(this->Omega) );
+				this->a = abs(this->a) * ( this->Omega/abs(this->Omega) );
 			}
 			break;
 			
 			case 3:
 			{
-				this->kw = 0.2f; //abs(this->kw) * ( this->Omega/abs(this->Omega) );
-				this->epsilon = 0.5f; //abs(this->epsilon) * ( this->Omega/abs(this->Omega) );
-				this->kv = 0.1f; //abs(this->kv) * ( this->Omega/abs(this->Omega) );
-				this->a = 1.0f; //abs(this->a) * ( this->Omega/abs(this->Omega) );
+				this->kw = abs(this->kw) * ( this->Omega/abs(this->Omega) );
+				this->epsilon = abs(this->epsilon) * ( this->Omega/abs(this->Omega) );
+				this->kv = - abs(this->kv) * ( this->Omega/abs(this->Omega) );
+				this->a = - abs(this->a) * ( this->Omega/abs(this->Omega) );
 			}
 			break;
 			

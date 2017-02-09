@@ -409,7 +409,7 @@ class OPUSim_RelativeSwarmOdometry
 					frameTresholded[i].copyTo(erode);
 					cv::erode( targetimg, targetimg, element );
 					
-					morph_size = 4;
+					morph_size = 20;
 					element = cv::getStructuringElement( morph_type,
 										                           cv::Size( 2*morph_size + 1, 2*morph_size+1 ),
 										                           cv::Point( morph_size, morph_size ) );
@@ -450,7 +450,7 @@ class OPUSim_RelativeSwarmOdometry
 						
 							cv::Scalar meancenter( mean(contours[i][j] ) );
 
-							/**/
+							/*
 							float minycont = 0.0f;
 							for(int k=0;k<=contours[i][j].size();k++)
 							{
@@ -461,10 +461,10 @@ class OPUSim_RelativeSwarmOdometry
 							}
 
 							cv::Point temp(meancenter[0], minycont);
-							/**/
-							/*
-							cv::Point temp(meancenter[0], meancenter[1]);
 							*/
+							/**/
+							cv::Point temp(meancenter[0], meancenter[1]);
+							/**/
 							float tresholdDistance = 10.0f;
 							bool duplicate = alreadyExists( temp, robots[i], tresholdDistance);
 						
@@ -684,7 +684,7 @@ class OPUSim_RelativeSwarmOdometry
 				{
 					this->pushing = true;
 					//TODO : define if we push or not when there is no neighbours
-					
+					std::cout << " NO NEIGHBOURS." << std::endl;
 					// REGULARIZATION WITH REGARDS TO THE NUMBER OF NEIGHBOARS :
 					thetatargetrad = thetas[0][targetIDX[0]]*PI/180.0f;
 					polarsInT[0] = cv::Mat::zeros( 2,1, CV_32F);
