@@ -1466,7 +1466,7 @@ class OPUSim_ControlLawDynamicObstacle
 	//------------------------------
 	
 	
-	OPUSim_ControlLawDynamicObstacle(const int& robot_number_, const bool& emergencyBreak_ = false, const bool& verbose_ = false, const float& gain_=1.0f, const float& R_=2.0f, const float& a_=1.0f, const float& epsilon_=10.0f, const float& kv_=0.1f, const float& kw_=0.2f, const float& Omega_=1.0f, const float& tresholdDistAccount_ = 0.4f, const float& tresholdDistFarEnough_ = 1.0f, const float& tresholdDistPair_ = 0.2f,  const float& Pang_=3e-3f, const float Iang_ = 1e-4f, const float& Plin_=1e-3f, const float Ilin_ = 0e-3f) : continuer(true), robot_number(robot_number_), R(R_), a(a_), epsilon(epsilon_), kv(kv_), kw(kw_), Omega(Omega_), gain(gain_), THETA(0.0f), r(0.0f), emergencyBreak(emergencyBreak_), verbose(verbose_),tau(10.0f),  Pang(Pang_), Iang(Iang_), Plin(Plin_), Ilin(Ilin_), tresholdDistAccount(tresholdDistAccount_)
+	OPUSim_ControlLawDynamicObstacle(const int& robot_number_, const bool& emergencyBreak_ = false, const bool& verbose_ = false, const float& gain_=1.0f, const float& R_=2.0f, const float& a_=1.0f, const float& epsilon_=10.0f, const float& kv_=0.1f, const float& kw_=0.2f, const float& Omega_=1.0f, const float& tresholdDistAccount_ = 0.4f, const float& tresholdDistFarEnough_ = 1.0f, const float& tresholdDistPair_ = 0.2f,  const float& Pang_=3e-3f, const float Iang_ = 1e-4f, const float& Plin_=5e-4f, const float Ilin_ = 0e-3f) : continuer(true), robot_number(robot_number_), R(R_), a(a_), epsilon(epsilon_), kv(kv_), kw(kw_), Omega(Omega_), gain(gain_), THETA(0.0f), r(0.0f), emergencyBreak(emergencyBreak_), verbose(verbose_),tau(10.0f),  Pang(Pang_), Iang(Iang_), Plin(Plin_), Ilin(Ilin_), tresholdDistAccount(tresholdDistAccount_)
 	{		
 	
 		std::string pathvar = "OPUSim_ControlLawDynamicObstacle_"+std::to_string(this->robot_number)+"/robot_number";
@@ -1578,7 +1578,7 @@ class OPUSim_ControlLawDynamicObstacle
 		/*-------------------------------------------*/
 		/*-------------------------------------------*/
 		this->goToGoalPose.x = 0.0f;
-		this->goToGoalPose.y = 0.0f;
+		this->goToGoalPose.y = -1.0f;
 		this->goToGoalPose.theta = 0.0f;
 		
 		this->currentPose = this->goToGoalPose;

@@ -4,7 +4,7 @@
 	<arg name="debugObstacles" default="0" doc="Verbose Debugging for OPUSim_Obstacles."/>
 	<arg name="debugRSO" default="0" doc="Verbose Debugging for OPUSim_RelativeSwarmOdometry."/>
 	
-	<arg name="emergencyBreak" default="1" doc="Everything will be launched except that the cmd_vel-related topic is publishing 0."/>
+	<arg name="emergencyBreak" default="0" doc="Everything will be launched except that the cmd_vel-related topic is publishing 0."/>
 	<arg name="tresholdDistAccount" default="0.25" doc="Treshold for the distance of obstacles that we take into account for obstacle avoidance."/>
 	<arg name="a" default="-1.0" doc="coefficient : negative when N lesser than 2."/>
 	<arg name="kv" default="-0.1" doc="coefficient to the radial velocity : negative when N lesser than 2."/>

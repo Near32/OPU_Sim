@@ -5,15 +5,18 @@
 	<arg name="debugRSO" default="0" doc="Verbose Debugging for OPUSim_RelativeSwarmOdometry."/>
 	
 	<arg name="emergencyBreak" default="0" doc="Everything will be launched except that the cmd_vel-related topic is publishing 0."/>
-	<arg name="tresholdDistAccount" default="0.6" doc="Treshold for the distance of obstacles that we take into account for obstacle avoidance."/>
+	<arg name="tresholdDistAccount" default="1.2" doc="Treshold for the distance of obstacles that we take into account for obstacle avoidance."/>
 	<arg name="a" default="1.0" doc="coefficient : negative when N lesser than 2."/>
 	<arg name="kv" default="0.1" doc="coefficient to the radial velocity : negative when N lesser than 2."/>
-	<!--
 	<arg name="kw" default="0.2" doc="coefficient to the amgular velocity : negative when Omega is negative."/>
-	-->
 	<arg name="R" default="1.0" doc="desired radius of the trajectory circle."/>
-	<arg name="epsilon" default="-1.0" doc="coupling strength : negative when N lesser or equal to 2."/>
+	<arg name="epsilon" default="1.0" doc="coupling strength : negative when N lesser or equal to 2."/>
 	<arg name="Omega" default="2.0" doc="natural frequency."/>
+	
+	<arg name="Plin" default="0.1" doc="P coefficient linear velocity."/>
+	<arg name="Ilin" default="0.0" doc="I coefficient linear velocity."/>
+	<arg name="Pang" default="1.0" doc="P coefficient angular velocity."/>
+	<arg name="Iang" default="0.0" doc="I coefficient angular velocity."/>
 	
 	
 	<node pkg="OPUSim" type="OPUSim_OmniView" name="OPUSim_OmniView_$(arg robot_number)" args="$(arg robot_number)" respawn="true">
@@ -40,7 +43,7 @@
 	</node>
 	
 	<!--
-	<node pkg="OPUSim" type="OPUSim_ControlLaw" name="OPUSim_ControlLaw_$(arg robot_number)" args="$(arg robot_number)" launch-prefix="xterm -e gdb dh args" respawn="false">
+	<node pkg="OPUSim" type="OPUSim_ControlLaw" name="OPUSim_ControlLaw_$(arg robot_number)" args="$(arg robot_number)" launch-prefix="xterm -e gdb db args" respawn="false">
 	-->
 	<!---->
 	<node pkg="OPUSim" type="OPUSim_ControlLaw" name="OPUSim_ControlLaw_$(arg robot_number)" args="$(arg robot_number)" respawn="true">
@@ -52,6 +55,10 @@
 		<rosparam param="kv" subst_value="True">$(arg kv)</rosparam>
 		<rosparam param="epsilon" subst_value="True">$(arg epsilon)</rosparam>
 		<rosparam param="Omega" subst_value="True">$(arg Omega)</rosparam>
+		<rosparam param="Plin" subst_value="True">$(arg Plin)</rosparam>
+		<rosparam param="Ilin" subst_value="True">$(arg Ilin)</rosparam>
+		<rosparam param="Pang" subst_value="True">$(arg Pang)</rosparam>
+		<rosparam param="Iang" subst_value="True">$(arg Iang)</rosparam>
 	</node>
 	<!---->
 	

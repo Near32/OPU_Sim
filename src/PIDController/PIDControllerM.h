@@ -58,7 +58,7 @@ class PIDControllerM
         Mat<T> err_diff(err-err_old);
         err_old = err;   
         
-        value = Kp*(err + Ki*err_sum + (Kd/dt)*err_diff);
+        value = Kp*err + Ki*err_sum + (Kd/dt)*err_diff;
         
         return value;
     }

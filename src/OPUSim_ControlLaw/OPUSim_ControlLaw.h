@@ -1032,14 +1032,14 @@ class MetaControlLaw
 		else
 		{
 			const float& gain_=1.0f;
-			const float& offset = 0.5f*tresholdDist;
+			const float& offset = 0.2f*tresholdDist;
 			// offset has to be large enough otherwise we end up with true negative avoidance...
 			float R_= tresholdDist-offset;
-			float a_=-0.2f;
+			float a_=-1.0f;
 			float kv_=-0.1f;
-			float kw_=0.3f;
-			//float Omega_=1.0f;
-			float Omega_=0.5f;
+			float kw_=0.5f;
+			float Omega_=4.0f;
+			//float Omega_=0.5f;
 			
 			bool isThereRelevantObstacles = false;
 			float tresholdAngle = 3*PI/8;
@@ -1169,9 +1169,16 @@ class MetaControlLaw
 				kw_ = abs(kw_);
 			}
 			
-			float THETA = 0.0f;
-			//it is the artificial current THETA of the robot in the obstacle-targeted reference-focused frame...
-		
+			float THETA = obstacleAngle;
+			if( THETA < 0.0f)
+			{
+				THETA = -PI-THETA;
+			}
+			else
+			{
+				THETA = PI-THETA;
+			}
+			
 			float f = a_*minObstacleDistance*(1.0f-(minObstacleDistance*minObstacleDistance)/(R_*R_));
 			float g = Omega_;
   
@@ -1183,10 +1190,10 @@ class MetaControlLaw
 			//-----------------------------------------------------
 			//----------------------------------------------------
 			//----------------------------------------------------
-			
+			float coefficient = 0.0f*abs(minObstacleDistance-tresholdDist); 
 			this->tailoredControlInput = cv::Mat::zeros( 2, 1, CV_32F);
-			this->tailoredControlInput.at<float>(0,0) = v;
-			this->tailoredControlInput.at<float>(1,0) = omega;
+			this->tailoredControlInput.at<float>(0,0) = v+coefficient*desiredControlInput.at<float>(0,0);
+			this->tailoredControlInput.at<float>(1,0) = omega+coefficient*desiredControlInput.at<float>(1,0);;
 			
 		}
 		
@@ -1464,7 +1471,7 @@ class OPUSim_ControlLaw
 	//------------------------------
 	
 	
-	OPUSim_ControlLaw(const int& robot_number_, const bool& emergencyBreak_ = false, const bool& verbose_ = false, const float& gain_=1.0f, const float& R_=2.0f, const float& a_=1.0f, const float& epsilon_=10.0f, const float& kv_=0.1f, const float& kw_=0.2f, const float& Omega_=1.0f, const float& tresholdDistAccount_ = 0.4f, const float& tresholdDistFarEnough_ = 1.0f, const float& tresholdDistPair_ = 0.2f,  const float& Pang_=10e-1f, const float Iang_ = 2e-1f, const float& Plin_=10e-1f, const float Ilin_ = 1e-1f) : continuer(true), robot_number(robot_number_), R(R_), a(a_), epsilon(epsilon_), kv(kv_), kw(kw_), Omega(Omega_), gain(gain_), THETA(0.0f), r(0.0f), emergencyBreak(emergencyBreak_), verbose(verbose_),tau(10.0f),  Pang(Pang_), Iang(Iang_), Plin(Plin_), Ilin(Ilin_), tresholdDistAccount(tresholdDistAccount_)
+	OPUSim_ControlLaw(const int& robot_number_, const bool& emergencyBreak_ = false, const bool& verbose_ = false, const float& gain_=1.0f, const float& R_=2.0f, const float& a_=1.0f, const float& epsilon_=10.0f, const float& kv_=0.1f, const float& kw_=0.2f, const float& Omega_=1.0f, const float& tresholdDistAccount_ = 0.4f, const float& tresholdDistFarEnough_ = 1.0f, const float& tresholdDistPair_ = 0.2f,  const float& Pang_=10e-1f, const float Iang_ = 0e-1f, const float& Plin_=10e-1f, const float Ilin_ = 0e-1f) : continuer(true), robot_number(robot_number_), R(R_), a(a_), epsilon(epsilon_), kv(kv_), kw(kw_), Omega(Omega_), gain(gain_), THETA(0.0f), r(0.0f), emergencyBreak(emergencyBreak_), verbose(verbose_),tau(10.0f),  Pang(Pang_), Iang(Iang_), Plin(Plin_), Ilin(Ilin_), tresholdDistAccount(tresholdDistAccount_)
 	{		
 	
 		std::string pathvar = "OPUSim_ControlLaw_"+std::to_string(this->robot_number)+"/robot_number";
@@ -1529,7 +1536,13 @@ class OPUSim_ControlLaw
 		}
 		
 		std::cout << "Omega : " << this->Omega << std::endl;
-			
+		
+		pathvar = "OPUSim_ControlLaw_"+std::to_string(this->robot_number)+"/kw";
+		if( this->nh.hasParam(pathvar.c_str()) )
+		{
+			this->nh.getParam(pathvar.c_str(),this->kw);
+		}
+		
 		this->kw = abs(this->kw)*(this->Omega/abs(this->Omega));
 		
 		std::cout << "kw : " << this->kw << std::endl;
@@ -1541,6 +1554,30 @@ class OPUSim_ControlLaw
 		}
 		
 		std::cout << "R : " << this->R << std::endl;
+		
+		pathvar = "OPUSim_ControlLaw_"+std::to_string(this->robot_number)+"/Plin";
+		if( this->nh.hasParam(pathvar.c_str()) )
+		{
+			this->nh.getParam(pathvar.c_str(),this->Plin);
+		}
+		
+		pathvar = "OPUSim_ControlLaw_"+std::to_string(this->robot_number)+"/Ilin";
+		if( this->nh.hasParam(pathvar.c_str()) )
+		{
+			this->nh.getParam(pathvar.c_str(),this->Ilin);
+		}
+		
+		pathvar = "OPUSim_ControlLaw_"+std::to_string(this->robot_number)+"/Pang";
+		if( this->nh.hasParam(pathvar.c_str()) )
+		{
+			this->nh.getParam(pathvar.c_str(),this->Pang);
+		}
+		
+		pathvar = "OPUSim_ControlLaw_"+std::to_string(this->robot_number)+"/Iang";
+		if( this->nh.hasParam(pathvar.c_str()) )
+		{
+			this->nh.getParam(pathvar.c_str(),this->Iang);
+		}
 		
 		it = new image_transport::ImageTransport(nh);
 		
@@ -1682,6 +1719,11 @@ class OPUSim_ControlLaw
 		currentpose2D.theta = desiredTheta;
 		//------------------------------
 		//------------------------------
+		this->rs->tadd( std::string("robotX"), currentpose2D.x );
+		this->rs->tadd( std::string("robotY"), currentpose2D.y );
+		this->rs->tadd( std::string("robotTHETA"), currentpose2D.theta );
+		//------------------------------
+		//------------------------------
 		
 		geometry_msgs::PoseStamped posest;
 		posest.pose = currentpose;
@@ -1704,14 +1746,19 @@ class OPUSim_ControlLaw
 	{
 		clock_t timer = clock();
 		int count_info = 0;
+		clock_t clocktime = clock();
+		float freqlogs = 1e4f;
 		
 		cv::Mat currentmsg;
 		cv::Mat currentObsmsg;
     int nbrRobotVisible = 0;
     float v = 0.0f, metav=0.0f, outputv=0.0f;
     float omega = 0.0f, metaomega=0.0f, outputomega=0.0f;
+    float mintheta;
+    float g = 0.0f;
     bool isDirectionSuitable = false;
     float tresholdDirectionSuitable = 3e-1f;
+    float thetatarget = 0.0f;
     
 		mutexRES.lock();
 		while(continuer)
@@ -1803,19 +1850,30 @@ class OPUSim_ControlLaw
 					this->parametersUpdate(nbrRobotVisible);
 					
 					THETA = currentmsg.at<float>(1,0);
+					thetatarget = THETA;
 					//it is the current THETA of the robot in the target reference-focused frame...
-				
+					while(THETA > PI)	THETA -= 2*PI;
+					while(THETA < -PI)	THETA += 2*PI;
+					
+					//THETA *= (this->Omega/abs(this->Omega));
+					//THETA = (PI-THETA);
+					
 					if( THETA < 0.0f)
 					{
-						THETA = -(PI+THETA);
+						THETA = -PI-THETA;
 					}
 					else
 					{
 						THETA = PI-THETA;
 					}
+					
+					
+					
+					
+					
 				
 					float sumphi = 0.0f;
-					float mintheta = 2*PI;
+					mintheta = 2*PI;
 				
 					if(nbrRobotVisible>=1)
 					{
@@ -1866,7 +1924,7 @@ class OPUSim_ControlLaw
 					//float Kgain = P*abs(desiredPhi-mintheta)/PI;
 				
 					float f = this->a*r*(1.0f-(r*r)/(this->R*this->R));
-					float g = this->Omega + this->epsilon*sumphi;
+					g = this->Omega + this->epsilon*sumphi;
 					//float g = this->Omega + this->epsilon*(1.0f+Kgain)*sumphi;
 				
 				
@@ -1880,12 +1938,6 @@ class OPUSim_ControlLaw
 					v = this->gain*this->kv*(f*cos(THETA) + r*g*sin(THETA));
 					//float omega = Kgain*this->gain*this->kw*(r*g*cos(THETA) - f*sin(THETA));
 					omega = this->gain*this->kw*(r*g*cos(THETA) - f*sin(THETA));
-					
-					//LOGS :
-					this->rs->tadd( std::string("rinput nl"), rinput );
-					this->rs->tadd( std::string("r nl"), r );
-					this->rs->tadd( std::string("v nl"), v );
-					this->rs->tadd( std::string("omega nl"), omega );
 				
 				}
 				
@@ -1900,7 +1952,7 @@ class OPUSim_ControlLaw
 				
 				//filtering that prevent obstacles to become hurdles to the correct orientation of the robot...
 				bool optimize = true;
-				bool kuramotoUse = false;
+				bool kuramotoUse = true;
 				
 				cv::Mat tailoredControlInput( this->metacl.run( desiredControlInput, optimize, kuramotoUse) );
 				metav = tailoredControlInput.at<float>(0,0);
@@ -1917,96 +1969,76 @@ class OPUSim_ControlLaw
 					metaomega=0.0f;
 				}	
 				
-				/*-------------------------------------------------------*/
-				/*-------------------------------------------------------*/
-				//	PI(D)-Controller : 
-				/*-------------------------------------------------------*/
-				
-				
-				/*-------------------------------------------------------*/
-				//observe velocity :
-				float currentv = -this->currentVel.linear.x;
-				float currentomega = this->currentVel.angular.z;
-				//float errorv = v-currentv;
-				//float erroromega = omega-currentomega;
-				float errorv = metav-currentv;
-				float erroromega = metaomega-currentomega;
-				
-				//TODO : find how to use it ...
-				/*
-				if( abs(erroromega)/metaomega > tresholdDirectionSuitable)
-				{
-					isDirectionSuitable = false;
-					std::cout << " DIRECTION NOT SUITABLE :: NO LINEAR VELOCITY !!!! " << std::endl;
-				}
-				else
-				{
-					isDirectionSuitable = true;
-				}
-				*/
-				isDirectionSuitable = true;
-				
-				cv::Mat odo = cv::Mat::zeros(2,1,CV_32F);
-				odo.at<float>(0,0) = currentv;
-				odo.at<float>(1,0) = currentomega;
-				
-				this->metacl.observeOdometry( odo );
-				this->metacl.update();
-				
-				/*-------------------------------------------------------*/
-				
-				if( !isDirectionSuitable)
-				{
-					//we do not move until the direction is the correct one.
-					metav = 0.0f;
-				}
-				
-				//this->pidlin.setConsigne(Mat<float>(v,1,1) );
-				//this->pidang.setConsigne(Mat<float>(omega,1,1) );
-				this->pidlin.setConsigne(Mat<float>(metav,1,1) );
-				this->pidang.setConsigne(Mat<float>(metaomega,1,1) );
-				
-				//TODO : decide the need of PID...
-				//outputv = this->pidlin.update( Mat<float>(currentv,1,1) ).get(1,1);				
-				//outputomega = this->pidang.update( Mat<float>(currentomega,1,1) ).get(1,1);
-				outputv = metav;
-				outputomega = metaomega;
-				
-				//std::cout << " PID outputs :: VxW : " << outputv << " x " << outputomega << std::endl;
-				
-				//LOGS :
-				this->rs->tadd( std::string("v error"), errorv );
-				this->rs->tadd( std::string("omega error"), erroromega );
-				
-				//this->rs->tadd( std::string("v consigne"), v );
-				//this->rs->tadd( std::string("omega consigne"), omega );
-				this->rs->tadd( std::string("v consigne"), metav );
-				this->rs->tadd( std::string("omega consigne"), metaomega );
-				
-				this->rs->tadd( std::string("v pid"), outputv );
-				this->rs->tadd( std::string("omega pid"), outputomega );
-				
-				this->rs->tadd( std::string("v odometry"), odo.at<float>(0,0) );
-				this->rs->tadd( std::string("omega odometry"), odo.at<float>(1,0) );
-				
-				this->rs->tadd( std::string("nbrRobotVisible"), float(nbrRobotVisible) );
-				
-				
-				//clipping :
-				float treshV = 10.0f;
-				float treshOmega = 10.0f;
-				if( abs(outputv) > treshV)
-				{
-					outputv = (outputv*treshV)/abs(outputv);
-				}
-				
-				if( abs(outputomega) > treshOmega)
-				{
-					outputomega = (outputomega*treshOmega)/abs(outputomega);
-				}
-				
 			}
 			
+			
+			/*-------------------------------------------------------*/
+			/*-------------------------------------------------------*/
+			//	PI(D)-Controller : 
+			/*-------------------------------------------------------*/
+			
+			
+			/*-------------------------------------------------------*/
+			//observe velocity :
+			float currentv = -this->currentVel.linear.x;
+			float currentomega = this->currentVel.angular.z;
+			float errorv = metav-currentv;
+			float erroromega = metaomega-currentomega;
+			
+			//TODO : find how to use it ...
+			/*
+			if( abs(erroromega)/metaomega > tresholdDirectionSuitable)
+			{
+				isDirectionSuitable = false;
+				std::cout << " DIRECTION NOT SUITABLE :: NO LINEAR VELOCITY !!!! " << std::endl;
+			}
+			else
+			{
+				isDirectionSuitable = true;
+			}
+			*/
+			isDirectionSuitable = true;
+			
+			cv::Mat odo = cv::Mat::zeros(2,1,CV_32F);
+			odo.at<float>(0,0) = currentv;
+			odo.at<float>(1,0) = currentomega;
+			
+			this->metacl.observeOdometry( odo );
+			this->metacl.update();
+			
+			/*-------------------------------------------------------*/
+			
+			if( !isDirectionSuitable)
+			{
+				//we do not move until the direction is the correct one.
+				metav = 0.0f;
+			}
+			
+			this->pidlin.setConsigne(Mat<float>(metav,1,1) );
+			this->pidang.setConsigne(Mat<float>(metaomega,1,1) );
+			
+			//TODO : decide the need of PID...
+			
+			outputv = this->pidlin.update( Mat<float>(currentv,1,1) ).get(1,1);				
+			outputomega = this->pidang.update( Mat<float>(currentomega,1,1) ).get(1,1);
+			/*
+			outputv = metav;
+			outputomega = metaomega;
+			*/
+			//std::cout << " PID outputs :: VxW : " << outputv << " x " << outputomega << std::endl;
+			
+			//clipping :
+			float treshV = 10.0f;
+			float treshOmega = 10.0f;
+			if( abs(outputv) > treshV)
+			{
+				outputv = (outputv*treshV)/abs(outputv);
+			}
+			
+			if( abs(outputomega) > treshOmega)
+			{
+				outputomega = (outputomega*treshOmega)/abs(outputomega);
+			}
 			
 			if(this->emergencyBreak)
 			{
@@ -2043,6 +2075,47 @@ class OPUSim_ControlLaw
 			twistpub.publish(twistmsg);
 			
 			
+			
+			//----------------------------------------------------
+			//----------------------------------------------------
+			//	LOGS :
+			//----------------------------------------------------
+			//----------------------------------------------------
+			float elapsedTime = (clock()-clocktime)/CLOCKS_PER_SEC;
+			if( true )//elapsedTime > 1.0f/freqlogs )
+			{
+				//LOGS :
+				this->rs->tadd( std::string("v nl"), v );
+				this->rs->tadd( std::string("omega nl"), omega );
+				
+				this->rs->tadd( std::string("v error"), errorv );
+				this->rs->tadd( std::string("omega error"), erroromega );
+			
+				//this->rs->tadd( std::string("v consigne"), v );
+				//this->rs->tadd( std::string("omega consigne"), omega );
+				this->rs->tadd( std::string("v consigne"), metav );
+				this->rs->tadd( std::string("omega consigne"), metaomega );
+			
+				this->rs->tadd( std::string("v pid"), outputv );
+				this->rs->tadd( std::string("omega pid"), outputomega );
+			
+				this->rs->tadd( std::string("v odometry"), odo.at<float>(0,0) );
+				this->rs->tadd( std::string("omega odometry"), odo.at<float>(1,0) );
+			
+				this->rs->tadd( std::string("nbrRobotVisible"), float(nbrRobotVisible) );
+				this->rs->tadd( std::string("Omega"), float(this->Omega) );
+				this->rs->tadd( std::string("kw"), float(this->kw) );
+				this->rs->tadd( std::string("kv"), float(this->kv) );
+				this->rs->tadd( std::string("epsilon"), float(this->epsilon) );
+				this->rs->tadd( std::string("a"), float(this->a) );
+				this->rs->tadd( std::string("THETA"), float(THETA) );
+				this->rs->tadd( std::string("THETAtarget"), float(thetatarget) );
+				this->rs->tadd( std::string("g"), float(g) );
+				this->rs->tadd( std::string("PSI"), float(mintheta) );
+				
+				clocktime = clock();
+			}
+			
 #ifdef debug_v0		
 			count_info++;
 	
@@ -2068,7 +2141,21 @@ class OPUSim_ControlLaw
 		{
 			case 0 :
 			{
-				this->kw = abs(this->kw) * ( this->Omega/abs(this->Omega) );
+				this->kw =  abs(this->kw) * ( this->Omega/abs(this->Omega) );
+				/* :
+				this->epsilon = - abs(this->epsilon) * ( this->Omega/abs(this->Omega) );
+				this->kv = - abs(this->kv) * ( this->Omega/abs(this->Omega) );
+				this->a = - abs(this->a) * ( this->Omega/abs(this->Omega) );
+				*/
+				
+				/*
+				//counter-clockwise iff Omega > 0 :
+				this->epsilon = abs(this->epsilon) * ( this->Omega/abs(this->Omega) );
+				this->kv = abs(this->kv) * ( this->Omega/abs(this->Omega) );
+				this->a = abs(this->a) * ( this->Omega/abs(this->Omega) );
+				*/
+				
+				//clockwise iff Omega > 0 :
 				this->epsilon = - abs(this->epsilon) * ( this->Omega/abs(this->Omega) );
 				this->kv = - abs(this->kv) * ( this->Omega/abs(this->Omega) );
 				this->a = - abs(this->a) * ( this->Omega/abs(this->Omega) );
@@ -2077,46 +2164,69 @@ class OPUSim_ControlLaw
 			
 			case 1:
 			{
-				this->kw = 0.2f;//abs(this->kw) * ( this->Omega/abs(this->Omega) );
-				this->epsilon =  -1.0f;//abs(this->epsilon) * ( this->Omega/abs(this->Omega) );
-				this->kv = 0.1f;// abs(this->kv) * ( this->Omega/abs(this->Omega) );
-				this->a = 1.0f; // abs(this->a) * ( this->Omega/abs(this->Omega) );
+				//this->Omega = abs(this->Omega);
+				this->kw = abs(this->kw) * ( this->Omega/abs(this->Omega) );//0.2f;
+				/*
+				// DEFAULT :
+				this->epsilon = - abs(this->epsilon) * ( this->Omega/abs(this->Omega) );//-1.0f;
+				this->kv = abs(this->kv) * ( this->Omega/abs(this->Omega) );//0.1f;
+				this->a = abs(this->a) * ( this->Omega/abs(this->Omega) );//1.0f;
+				*/
+				
+				// clockwise iff Omega > 0:
+				this->epsilon = abs(this->epsilon) * ( this->Omega/abs(this->Omega) );//-1.0f;
+				this->kv = - abs(this->kv) * ( this->Omega/abs(this->Omega) );//0.1f;
+				this->a = - abs(this->a) * ( this->Omega/abs(this->Omega) );//1.0f;
 			}
 			break;
 			
 			case 2:
 			{
-				this->kw = 0.2f; //abs(this->kw) * ( this->Omega/abs(this->Omega) );
-				this->epsilon = 0.5f; //abs(this->epsilon) * ( this->Omega/abs(this->Omega) );
-				this->kv = -0.1f; //- abs(this->kv) * ( this->Omega/abs(this->Omega) );
-				this->a = -1.0f; //- abs(this->a) * ( this->Omega/abs(this->Omega) );
+				this->kw = abs(this->kw) * ( this->Omega/abs(this->Omega) );//0.2f;
+				/*
+				//DEFAULT
+				this->epsilon = abs(this->epsilon) * ( this->Omega/abs(this->Omega) );//0.5f;
+				this->kv = - abs(this->kv) * ( this->Omega/abs(this->Omega) );//-0.1f;
+				this->a = - abs(this->a) * ( this->Omega/abs(this->Omega) );//-1.0f;
+				*/
+				
+				// clockwise iff Omega > 0 :
+				this->epsilon = abs(this->epsilon) * ( this->Omega/abs(this->Omega) );//0.5f;
+				this->kv = - abs(this->kv) * ( this->Omega/abs(this->Omega) );//-0.1f;
+				this->a = - abs(this->a) * ( this->Omega/abs(this->Omega) );//-1.0f;
 			}
 			break;
 			
 			case 3:
 			{
-				this->kw = 0.2f; //abs(this->kw) * ( this->Omega/abs(this->Omega) );
-				this->epsilon = 0.5f; //abs(this->epsilon) * ( this->Omega/abs(this->Omega) );
-				this->kv = 0.1f; //abs(this->kv) * ( this->Omega/abs(this->Omega) );
-				this->a = 1.0f; //abs(this->a) * ( this->Omega/abs(this->Omega) );
+				this->kw = abs(this->kw) * ( this->Omega/abs(this->Omega) );
+				
+				// clockwise iff Omega > 0 :
+				this->epsilon = - abs(this->epsilon) * ( this->Omega/abs(this->Omega) );
+				this->kv = - abs(this->kv) * ( this->Omega/abs(this->Omega) );
+				this->a = - abs(this->a) * ( this->Omega/abs(this->Omega) );
 			}
 			break;
 			
 			case 4:
 			{
 				this->kw = abs(this->kw) * ( this->Omega/abs(this->Omega) );
-				this->epsilon = abs(this->epsilon) * ( this->Omega/abs(this->Omega) );
-				this->kv = abs(this->kv) * ( this->Omega/abs(this->Omega) );
-				this->a = abs(this->a) * ( this->Omega/abs(this->Omega) );
+				
+				// clockwise iff Omega > 0 :
+				this->epsilon = - abs(this->epsilon) * ( this->Omega/abs(this->Omega) );
+				this->kv = - abs(this->kv) * ( this->Omega/abs(this->Omega) );
+				this->a = - abs(this->a) * ( this->Omega/abs(this->Omega) );
 			}
 			break;
 			
 			default :
 			{
 				this->kw = abs(this->kw) * ( this->Omega/abs(this->Omega) );
-				this->epsilon = abs(this->epsilon) * ( this->Omega/abs(this->Omega) );
-				this->kv = abs(this->kv) * ( this->Omega/abs(this->Omega) );
-				this->a = abs(this->a) * ( this->Omega/abs(this->Omega) );
+				
+				// clockwise iff Omega > 0 :
+				this->epsilon = - abs(this->epsilon) * ( this->Omega/abs(this->Omega) );
+				this->kv = - abs(this->kv) * ( this->Omega/abs(this->Omega) );
+				this->a = - abs(this->a) * ( this->Omega/abs(this->Omega) );
 			}
 			break;
 		}

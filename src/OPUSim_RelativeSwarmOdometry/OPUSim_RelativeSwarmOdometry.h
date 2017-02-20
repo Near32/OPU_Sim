@@ -450,7 +450,7 @@ class OPUSim_RelativeSwarmOdometry
 						
 							cv::Scalar meancenter( mean(contours[i][j] ) );
 
-							/*
+							/**/
 							float minycont = 0.0f;
 							for(int k=0;k<=contours[i][j].size();k++)
 							{
@@ -461,10 +461,10 @@ class OPUSim_RelativeSwarmOdometry
 							}
 
 							cv::Point temp(meancenter[0], minycont);
-							*/
 							/**/
+							/*
 							cv::Point temp(meancenter[0], meancenter[1]);
-							/**/
+							*/
 							float tresholdDistance = 10.0f;
 							bool duplicate = alreadyExists( temp, robots[i], tresholdDistance);
 						
@@ -593,17 +593,26 @@ class OPUSim_RelativeSwarmOdometry
 						{
 							radius[i].push_back( radiusval);
 							thetas[i].push_back( thetaval);
+							
+							if(targetIDX[i] == j)
+							{
+								targetIDX[i] = thetas[i].size()-1;
+							}
 						}
 						else
 						{
-							//let us account for the target :
-							if(j==robots[i].size()-1)
+							//if the current robot that is being controlled is out of the image space :
+							//let us account for the fact that it might be the target :
+							if(j==targetIDX[i])
 							{
+								//if it is the target, then unfortunately it is not reliable, so we must exclude it :
 								notarget = true;
 							}
 						}
 					}
 				}
+				
+				
 				
 				if( !noneighbours )
 				{
@@ -619,11 +628,11 @@ class OPUSim_RelativeSwarmOdometry
 						cvthetatarget.at<float>(0,0) = thetas[0][targetIDX[0]];
 						cvradiustarget.at<float>(0,0) = radius[0][targetIDX[0]];
 						
-						//thetas[0].erase(thetas[0].begin()+targetIDX[0]);
-						//radius[0].erase(radius[0].begin()+targetIDX[0]);
-						// if there is a target, then, however the formulation, it is the last one :
-						thetas[0].erase(thetas[0].begin()+thetas[0].size()-1);
-						radius[0].erase(radius[0].begin()+radius[0].size()-1);
+						thetas[0].erase(thetas[0].begin()+targetIDX[0]);
+						radius[0].erase(radius[0].begin()+targetIDX[0]);
+						// other formulation : if there is a target, then, however the formulation, it is the last one :
+						//thetas[0].erase(thetas[0].begin()+thetas[0].size()-1);
+						//radius[0].erase(radius[0].begin()+radius[0].size()-1);
 						
 						
 						cv::vconcat( cvradiustarget, cvthetatarget, targetpolar);
