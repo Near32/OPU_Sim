@@ -1219,9 +1219,9 @@ class MetaControlLaw
 		else
 		{
 			const float& gain_=1.0f;
-			const float& offset = 0.2f*tresholdDist;
+			const float& offset = 0.2f*this->tresholdDist;
 			// offset has to be large enough otherwise we end up with true negative avoidance...
-			float R_= tresholdDist-offset;
+			float R_= this->tresholdDist-offset;
 			float a_=-1.0f;
 			float kv_=-0.1f;
 			float kw_=0.5f;
@@ -1279,8 +1279,8 @@ class MetaControlLaw
 			
 			// So far, we know of an obstacle in the vigilence area :
 			// let us return the obstacle angle : 
-			// the zero at the beginning of the vector means that changes have to be made.
 			this->tailoredControlInput = cv::Mat::zeros( 2, 1, CV_32F);
+			this->tailoredControlInput.at<float>(0,0) = minObstacleDistance;
 			this->tailoredControlInput.at<float>(1,0) = obstacleAngle;
 			
 		}
@@ -1515,6 +1515,8 @@ class OPUSim_ControlLaw
 	float R;
 	float desiredR;
 	float Rdot;
+	float thetaNearestObstacle;
+	float distNearestObstacle;
 	float kR;
 	float a;
 	float epsilon;
@@ -1649,7 +1651,11 @@ class OPUSim_ControlLaw
 		}
 		
 		std::cout << "R : " << this->R << std::endl;
+		this->r = 0.0f;
 		this->desiredR = this->R;
+		this->Rdot = 0.0f;
+		this->thetaNearestObstacle = 0.0f;
+		this->distNearestObstacle = 0.0f;
 		
 		pathvar = "OPUSim_ControlLaw_"+std::to_string(this->robot_number)+"/kR";
 		if( this->nh.hasParam(pathvar.c_str()) )
@@ -1862,17 +1868,17 @@ class OPUSim_ControlLaw
     float omega = 0.0f, metaomega=0.0f, outputomega=0.0f;
     float mintheta;
     float g = 0.0f;
+    float f = 0.0f;
     bool isDirectionSuitable = false;
     float tresholdDirectionSuitable = 3e-1f;
     float thetatarget = 0.0f;
+    float dt = 0.1f;
     
 		mutexRES.lock();
 		while(continuer)
 		{
 			mutexRES.unlock();
 			
-			float dt = (clock()-timerdt)/CLOCKS_PER_SEC; //in seconds
-			timerdt = clock();
 			
 			clock_t timerloop = clock();
 			
@@ -2032,7 +2038,8 @@ class OPUSim_ControlLaw
 					*/
 					//float Kgain = P*abs(desiredPhi-mintheta)/PI;
 				
-					float f = this->a*r*(1.0f-(r*r)/(this->R*this->R));
+					//float f = this->a*r*(1.0f-(r*r)/(this->R*this->R));
+					f = this->a*(this->R-r);
 					g = this->Omega + this->epsilon*sumphi;
 					//float g = this->Omega + this->epsilon*(1.0f+Kgain)*sumphi;
 				
@@ -2064,6 +2071,9 @@ class OPUSim_ControlLaw
 				bool kuramotoUse = false;
 				bool kuramotoRadiusUse = true;
 				
+				dt = float(clock()-timerdt)/CLOCKS_PER_SEC; //in seconds
+				timerdt = clock();
+			
 				cv::Mat tailoredControlInput( this->metacl.run( desiredControlInput, optimize, kuramotoUse,kuramotoRadiusUse) );
 				if(kuramotoUse)
 				{
@@ -2075,14 +2085,18 @@ class OPUSim_ControlLaw
 					metav = v;
 					metaomega = omega;
 					
-					if(tailoredControlInput.at<float>(0,0) == 0.0f)
+					if(tailoredControlInput.at<float>(0,0) != v)
 					{
-						this->updateRadius(tailoredControlInput.at<float>(1,0),dt);
+						this->thetaNearestObstacle = tailoredControlInput.at<float>(1,0);
+						this->distNearestObstacle = tailoredControlInput.at<float>(0,0); 
 					}
 					else
 					{
-						this->updateRadius(PI/2.0,dt);
+						this->distNearestObstacle = tailoredControlInput.at<float>(0,0);
+						this->thetaNearestObstacle = PI/2.0;
 					}
+					
+					this->updateRadius(this->thetaNearestObstacle,this->distNearestObstacle,dt);
 				}
 				else
 				{
@@ -2177,6 +2191,8 @@ class OPUSim_ControlLaw
 				outputomega=0.0f;
 			}
 			
+			if(std::isnan(outputv))	outputv = 0.0f;
+			if(std::isnan(outputomega))	outputomega = 0.0f;
 			
 			//----------------------------
 			//		Publisher
@@ -2237,12 +2253,20 @@ class OPUSim_ControlLaw
 				this->rs->tadd( std::string("Omega"), float(this->Omega) );
 				this->rs->tadd( std::string("kw"), float(this->kw) );
 				this->rs->tadd( std::string("kv"), float(this->kv) );
+				this->rs->tadd( std::string("kR"), float(this->kR) );
 				this->rs->tadd( std::string("epsilon"), float(this->epsilon) );
 				this->rs->tadd( std::string("a"), float(this->a) );
 				this->rs->tadd( std::string("THETA"), float(THETA) );
 				this->rs->tadd( std::string("THETAtarget"), float(thetatarget) );
 				this->rs->tadd( std::string("g"), float(g) );
+				this->rs->tadd( std::string("f"), float(f) );
 				this->rs->tadd( std::string("PSI"), float(mintheta) );
+				this->rs->tadd( std::string("r"), float(this->r) );
+				this->rs->tadd( std::string("R"), float(this->R) );
+				this->rs->tadd( std::string("Rdot"), float(this->Rdot) );
+				this->rs->tadd( std::string("thetaNearestObstacle"), float(this->thetaNearestObstacle) );
+				this->rs->tadd( std::string("distNearestObstacle"), float(this->distNearestObstacle) );
+				this->rs->tadd( std::string("dt"), float(dt) );
 				
 				clocktime = clock();
 			}
@@ -2264,14 +2288,20 @@ class OPUSim_ControlLaw
 
 	}
 	
-	void updateRadius(float thetaObs, float dt)
+	void updateRadius(float thetaObs, float distObs, float dt)
 	{
 		//compute the velocity :
+		if( abs(thetaObs) > PI/2.0 )	thetaObs = PI/2.0f;
+		
 		float lambda = cos(thetaObs);
-		this->Rdot = fabs(this->desiredR-this->R)*(this->kR/this->R)*(1.0-lambda) + (thetaObs/fabs(thetaObs))*(this->kR/this->R)*lambda; 
+		this->Rdot = (this->desiredR-this->R)*(1.0f/this->desiredR)*(1.0-lambda) + (-this->kR/(abs(distObs-0.7*this->tresholdDistAccount)+1e-4f))*(thetaObs/(abs(thetaObs)+1e-4f))*lambda; 
 		
 		//update :
 		this->R += dt*this->Rdot;
+		
+		if(this->R < this->desiredR/4.0)	this->R = this->desiredR/4.0;
+		if(this->R > this->desiredR*4.0) this->R = this->desiredR*4.0;
+		
 	}
 	
 	void parametersUpdate(const int& nbrRobotVisible)
