@@ -1200,6 +1200,94 @@ class MetaControlLaw
 	}
 	
 	
+	
+	
+	void optimizeKuramotoRadius( const cv::Mat& desiredControlInput)
+	{
+		/*
+		Create the repulsion/attraction map from the positions of the obstacles retrieved by the RGBD sensor.
+		Argument(s) :
+		- desiredControlInput = desiredVelocity : vector (v,omega) of the desired control law we want the current robot to follow.
+		Output(s) :
+		- tailoredControlInput = tailoredVelocity : vector (v, omega) optimized to fulfill our objectives. 
+		*/
+		
+		if(this->needToOptimize == false)
+		{
+			this->tailoredControlInput = desiredControlInput;
+		}
+		else
+		{
+			const float& gain_=1.0f;
+			const float& offset = 0.2f*tresholdDist;
+			// offset has to be large enough otherwise we end up with true negative avoidance...
+			float R_= tresholdDist-offset;
+			float a_=-1.0f;
+			float kv_=-0.1f;
+			float kw_=0.5f;
+			float Omega_=4.0f;
+			//float Omega_=0.5f;
+			
+			bool isThereRelevantObstacles = false;
+			float tresholdAngle = 3*PI/8;
+			float tresholdAngular = 3*PI/8;
+			float tresholdDesiredOmegaKeepAvoiding = abs(a_*kw_*1e-1f*R_);
+			
+			obstacleAngle = PI/2;
+			minObstacleDistance = tresholdDist+offset;
+			
+			for(int i=0;i<this->nbrObj;i++)
+			{
+				float dist = sqrt(pow( this->state.at<float>(0,i), 2) + pow( this->state.at<float>(2,i), 2))+1e-3f;
+				
+				if( dist < this->tresholdDist)
+				{
+					isThereRelevantObstacles = true;
+					
+					float angleObstacle = std::atan2( this->state.at<float>(2,i), this->state.at<float>(0,i) ) + PI;
+					
+					while( angleObstacle > PI)
+					{
+						angleObstacle -= 2*PI;
+					}
+					while( angleObstacle < -PI)
+					{
+						angleObstacle += 2*PI;
+					}
+					
+					if( minObstacleDistance > dist)
+					{
+						minObstacleDistance = dist;
+						obstacleAngle = angleObstacle;
+					}
+					
+				}
+			}			
+			
+			if(!isThereRelevantObstacles )
+			{
+				//TODO
+				//maybe it is a false detection...
+				
+				this->tailoredControlInput = desiredControlInput;
+				this->kuramotoCurrentlyAvoiding = false;
+				
+				std::cout << " NO RELEVANT OBSTACLES TO AVOID. " << std::endl;
+				
+				return;
+			}
+			
+			// So far, we know of an obstacle in the vigilence area :
+			// let us return the obstacle angle : 
+			// the zero at the beginning of the vector means that changes have to be made.
+			this->tailoredControlInput = cv::Mat::zeros( 2, 1, CV_32F);
+			this->tailoredControlInput.at<float>(1,0) = obstacleAngle;
+			
+		}
+		
+	}
+	
+	
 	void reset()
 	{
 		this->nbrObj = 0;
@@ -1253,7 +1341,7 @@ class MetaControlLaw
 		cloud_pub.publish(cloudmsg);
 	}
 	
-	cv::Mat run( const cv::Mat& desiredControlInput, const bool& optimize=true, const bool& kuramoto = true )
+	cv::Mat run( const cv::Mat& desiredControlInput, const bool& optimize=true, const bool& kuramoto = true, const bool& kuramotoRadius = false )
 	{
 		/*
 		Deals with the computation of a safe velocity vector in order to fulfill the following of the desiredVelocity and the obstacle avoidance task.
@@ -1276,6 +1364,10 @@ class MetaControlLaw
 		if( kuramoto)
 		{
 			this->optimizeKuramoto( desiredControlInput );
+		}
+		else if( kuramotoRadius)
+		{
+			this->optimizeKuramotoRadius( desiredControlInput );
 		}
 		else
 		{
@@ -1421,6 +1513,9 @@ class OPUSim_ControlLaw
 	std::thread* t;
 	
 	float R;
+	float desiredR;
+	float Rdot;
+	float kR;
 	float a;
 	float epsilon;
 	float kv;
@@ -1554,6 +1649,16 @@ class OPUSim_ControlLaw
 		}
 		
 		std::cout << "R : " << this->R << std::endl;
+		this->desiredR = this->R;
+		
+		pathvar = "OPUSim_ControlLaw_"+std::to_string(this->robot_number)+"/kR";
+		if( this->nh.hasParam(pathvar.c_str()) )
+		{
+			this->nh.getParam(pathvar.c_str(),this->kR);
+		}
+		
+		std::cout << "kR : " << this->kR << std::endl;
+		
 		
 		pathvar = "OPUSim_ControlLaw_"+std::to_string(this->robot_number)+"/Plin";
 		if( this->nh.hasParam(pathvar.c_str()) )
@@ -1745,6 +1850,7 @@ class OPUSim_ControlLaw
 	void loop()
 	{
 		clock_t timer = clock();
+		clock_t timerdt = clock();
 		int count_info = 0;
 		clock_t clocktime = clock();
 		float freqlogs = 1e4f;
@@ -1764,6 +1870,9 @@ class OPUSim_ControlLaw
 		while(continuer)
 		{
 			mutexRES.unlock();
+			
+			float dt = (clock()-timerdt)/CLOCKS_PER_SEC; //in seconds
+			timerdt = clock();
 			
 			clock_t timerloop = clock();
 			
@@ -1952,12 +2061,34 @@ class OPUSim_ControlLaw
 				
 				//filtering that prevent obstacles to become hurdles to the correct orientation of the robot...
 				bool optimize = true;
-				bool kuramotoUse = true;
+				bool kuramotoUse = false;
+				bool kuramotoRadiusUse = true;
 				
-				cv::Mat tailoredControlInput( this->metacl.run( desiredControlInput, optimize, kuramotoUse) );
-				metav = tailoredControlInput.at<float>(0,0);
-				metaomega = tailoredControlInput.at<float>(1,0);
-				
+				cv::Mat tailoredControlInput( this->metacl.run( desiredControlInput, optimize, kuramotoUse,kuramotoRadiusUse) );
+				if(kuramotoUse)
+				{
+					metav = tailoredControlInput.at<float>(0,0);
+					metaomega = tailoredControlInput.at<float>(1,0);
+				}
+				else if(kuramotoRadiusUse)
+				{
+					metav = v;
+					metaomega = omega;
+					
+					if(tailoredControlInput.at<float>(0,0) == 0.0f)
+					{
+						this->updateRadius(tailoredControlInput.at<float>(1,0),dt);
+					}
+					else
+					{
+						this->updateRadius(PI/2.0,dt);
+					}
+				}
+				else
+				{
+					metav = v;
+					metaomega = omega;
+				}
 				//----------------------------------------------------
 				//----------------------------------------------------
 				
@@ -2131,6 +2262,16 @@ class OPUSim_ControlLaw
 		}
 		mutexRES.unlock();
 
+	}
+	
+	void updateRadius(float thetaObs, float dt)
+	{
+		//compute the velocity :
+		float lambda = cos(thetaObs);
+		this->Rdot = fabs(this->desiredR-this->R)*(this->kR/this->R)*(1.0-lambda) + (thetaObs/fabs(thetaObs))*(this->kR/this->R)*lambda; 
+		
+		//update :
+		this->R += dt*this->Rdot;
 	}
 	
 	void parametersUpdate(const int& nbrRobotVisible)
