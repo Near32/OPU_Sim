@@ -2038,8 +2038,8 @@ class OPUSim_ControlLaw
 					*/
 					//float Kgain = P*abs(desiredPhi-mintheta)/PI;
 				
-					//float f = this->a*r*(1.0f-(r*r)/(this->R*this->R));
-					f = this->a*(this->R-r);
+					f = this->a*r*(1.0f-(r*r)/(this->R*this->R));
+					//f = this->a*(this->R-r);
 					//f = this->a*(1.0f-(r*r)/(this->R*this->R));
 					g = this->Omega + this->epsilon*sumphi;
 					//float g = this->Omega + this->epsilon*(1.0f+Kgain)*sumphi;
@@ -2093,7 +2093,7 @@ class OPUSim_ControlLaw
 					}
 					else
 					{
-						this->distNearestObstacle = tailoredControlInput.at<float>(0,0);
+						this->distNearestObstacle = this->tresholdDistAccount;
 						this->thetaNearestObstacle = PI/2.0;
 					}
 					
