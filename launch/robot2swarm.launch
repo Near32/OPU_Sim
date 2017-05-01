@@ -1,0 +1,26 @@
+<launch>
+  <arg name="world_file"  default="$(find OPUSim)/launch/worlds/empty.world"/>
+	<arg name="gui" default="true"/>
+  
+
+
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="paused" value="true"/>
+    <arg name="use_sim_time" value="true"/>
+    <arg name="gui" value="$(arg gui)"/>
+    <arg name="headless" value="false"/>
+    <arg name="debug" value="false"/>
+    <arg name="world_name" value="$(arg world_file)"/>
+  </include>
+  
+  <!-- Spawn a robot into Gazebo -->
+	<node name="spawn_model0" pkg="gazebo_ros" type="spawn_model" args="-file $(find OPUSim)/models/robot_model_teleop_0/model.sdf -sdf -z 1 -x 1 -y 1 -model robot_0" />
+	
+	<!-- Spawn a robot into Gazebo -->
+	<node name="spawn_model1" pkg="gazebo_ros" type="spawn_model" args="-file $(find OPUSim)/models/robot_model_teleop_1/model.sdf -sdf -z 1 -x -1 -y -1 -yaw 90 -model robot_1" />
+	
+	<!-- Spawn a robot into Gazebo -->
+	<node name="spawn_target" pkg="gazebo_ros" type="spawn_model" args="-file $(find OPUSim)/models/target_model/model.sdf -sdf -z 1 -x 0 -y 0 -model target_model" />
+	
+	
+</launch>
