@@ -23,7 +23,7 @@
 	
 	<include file="$(find OPUSim)/launch/robot.launch">
 		<arg name="robot_number" 				value="0"/>
-		<arg name="R" 									value="1.0"/>
+		<arg name="R" 									value="2.0"/>
 		<arg name="emergencyBreak" 			value="0"/>
 		<arg name="Omega" 							value="2.0"/>
 		<arg name="tresholdDistAccount" value="0.6"/>
@@ -36,5 +36,7 @@
 		<arg name="Iang" 								value="0.4"/>
 		<arg name="launchController" 		value="$(arg launchController)"/>
 	</include>
+	
+	<node name="reward" pkg="GazeboRL" type="reward.py" args="-r 2.0 -v 1.0"/>
 	
 </launch>
