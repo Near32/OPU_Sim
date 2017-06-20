@@ -4,7 +4,7 @@ int main(int argc, char* argv[])
 {
 	
 	
-	std::cout << " Usage : robot_number [int] // method [int=0] // verbose [int=0]." << std::endl;
+	std::cout << " Usage : robot_number [int] // method [int=0] // verbose [int=0] // useHalfView [int=0]." << std::endl;
 	
 	int robot_number = 0;
 	if(argc>1)
@@ -24,10 +24,15 @@ int main(int argc, char* argv[])
 		verbose = (atoi(argv[3])==1?true:false);
 	}
 	
+	bool useHalfView = false;
+	if( argc>4)
+	{
+		useHalfView = (atoi(argv[4])==1?true:false);
+	}
 	
 	ros::init(argc, argv,std::string("OPUSim_RelativeSwarmOdometry_"+std::to_string(robot_number)).c_str() );
 
-	OPUSim_RelativeSwarmOdometry rso(robot_number,method,verbose);
+	OPUSim_RelativeSwarmOdometry rso(robot_number,method,verbose,useHalfView);
 	
 	ros::spin();
 	

@@ -33,6 +33,7 @@
 		<arg name="kR" 									value="10.0"/>
 		<arg name="epsilon" 						value="1.0"/>
 		<arg name="debugRSO" 						value="0"/>
+		<arg name="useHalfView" 				value="1"/>
 		<arg name="Iang" 								value="0.4"/>
 		<arg name="launchController" 		value="$(arg launchController)"/>
 	</include>

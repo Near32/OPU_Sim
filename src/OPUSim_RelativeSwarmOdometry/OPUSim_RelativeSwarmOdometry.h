@@ -189,9 +189,10 @@ class OPUSim_RelativeSwarmOdometry
 	bool pushing;
 	
 	bool verbose;
+	bool useHalfView;
 	
 	
-	OPUSim_RelativeSwarmOdometry(const int& robot_number_, const int& method_ = 0, const bool& verbose_ = false ) : continuer(true), robot_number(robot_number_), method(method_),scaler(1),notarget(true),noneighbours(true), verbose(verbose_), pushing(false)
+	OPUSim_RelativeSwarmOdometry(const int& robot_number_, const int& method_ = 0, const bool& verbose_ = false, const bool& useHalfView_ = false ) : continuer(true), robot_number(robot_number_), method(method_),scaler(1),notarget(true),noneighbours(true), verbose(verbose_), pushing(false), useHalfView(useHalfView_)
 	{			
 		std::string pathvar = "OPUSim_RelativeSwarmOdometry_"+std::to_string(this->robot_number)+"/robot_number";
 		if( this->nh.hasParam(pathvar.c_str()) )
@@ -214,7 +215,20 @@ class OPUSim_RelativeSwarmOdometry
 		
 		std::string path( "/robot_model_teleop_"+std::to_string(robot_number)+"/");
 		//std::string path( "/robot_model_teleop/");
+		
 		std::string pathSUB(path+"OMNIVIEW");
+		pathvar = "OPUSim_RelativeSwarmOdometry_"+std::to_string(this->robot_number)+"/useHalfView";
+		if(this->nh.hasParam(pathvar.c_str()) )
+		{
+			int verbose;
+			this->nh.getParam(pathvar.c_str(),verbose);
+			this->useHalfView = (verbose==1?true:false);
+		}
+		if(this->useHalfView)
+		{
+			pathSUB = path+"HALFVIEW";
+		}
+		
 		std::string pathPUB(path+"RSO");
 		
 		img_sub = it->subscribe( pathSUB.c_str(), 1, &OPUSim_RelativeSwarmOdometry::callback,this);

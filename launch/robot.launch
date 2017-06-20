@@ -3,6 +3,7 @@
 	<arg name="robot_number" default="0" doc="Number of the robot we want to launch."/>
 	<arg name="debugObstacles" default="0" doc="Verbose Debugging for OPUSim_Obstacles."/>
 	<arg name="debugRSO" default="0" doc="Verbose Debugging for OPUSim_RelativeSwarmOdometry."/>
+	<arg name="useHalfView" default="false" doc="Use the Halfview instead of the Omniview..."/>
 	
 	<arg name="emergencyBreak" default="0" doc="Everything will be launched except that the cmd_vel-related topic is publishing 0."/>
 	<arg name="tresholdDistAccount" default="1.2" doc="Treshold for the distance of obstacles that we take into account for obstacle avoidance."/>
@@ -20,10 +21,16 @@
 	<arg name="Iang" default="0.0" doc="I coefficient angular velocity."/>
 	<arg name="launchController" default="true"/>
 	
-	
-	<node pkg="OPUSim" type="OPUSim_OmniView" name="OPUSim_OmniView_$(arg robot_number)" args="$(arg robot_number)" respawn="true">
-		<rosparam param="robot_number" subst_value="True">$(arg robot_number)</rosparam>
-	</node>
+	<group if="$(not arg useHalfView)">
+		<node pkg="OPUSim" type="OPUSim_OmniView" name="OPUSim_OmniView_$(arg robot_number)" args="$(arg robot_number)" respawn="true">
+			<rosparam param="robot_number" subst_value="True">$(arg robot_number)</rosparam>
+		</node>
+	</group>
+	<group if="$(arg useHalfView)">
+		<node pkg="OPUSim" type="OPUSim_HalfView" name="OPUSim_HalfView_$(arg robot_number)" args="$(arg robot_number)" respawn="true">
+			<rosparam param="robot_number" subst_value="True">$(arg robot_number)</rosparam>
+		</node>
+	</group>
 	
 	<!--
 	<node pkg="OPUSim" type="OPUSim_Obstacles" name="OPUSim_Obstacles_$(arg robot_number)" args="$(arg robot_number)" launch-prefix="xterm -e gdb double hyphenargs" respawn="false">
@@ -42,6 +49,7 @@
 	<!---->
 		<rosparam param="robot_number" subst_value="True">$(arg robot_number)</rosparam> 
 		<rosparam param="debug" subst_value="True">$(arg debugRSO)</rosparam> 
+		<rosparam param="useHalfView" subst_value="True">$(arg useHalfView)</rosparam>
 	</node>
 	
 	<group if="$(arg launchController)">
