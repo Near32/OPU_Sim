@@ -21,7 +21,7 @@
 	<arg name="Iang" default="0.0" doc="I coefficient angular velocity."/>
 	<arg name="launchController" default="true"/>
 	
-	<group if="$(not arg useHalfView)">
+	<group unless="$(arg useHalfView)">
 		<node pkg="OPUSim" type="OPUSim_OmniView" name="OPUSim_OmniView_$(arg robot_number)" args="$(arg robot_number)" respawn="true">
 			<rosparam param="robot_number" subst_value="True">$(arg robot_number)</rosparam>
 		</node>
