@@ -708,8 +708,15 @@ class OPUSim_RelativeSwarmOdometry
 					this->pushing = true;
 					//TODO : define if we push or not when there is no neighbours
 					std::cout << " NO NEIGHBOURS." << std::endl;
-					// REGULARIZATION WITH REGARDS TO THE NUMBER OF NEIGHBOARS :
-					thetatargetrad = thetas[0][targetIDX[0]]*PI/180.0f;
+					// REGULARIZATION WITH REGARDS TO THE NUMBER OF NEIGHBOURS :
+					if(thetas[0].size())
+					{
+						thetatargetrad = thetas[0][targetIDX[0]]*PI/180.0f;
+					}
+					else 
+					{
+						thetatargetrad = 0.0f;
+					}
 					polarsInT[0] = cv::Mat::zeros( 2,1, CV_32F);
 					polarsInT[0].at<float>(1,0) = thetatargetrad;
 					//let us give to the controller the value of thetatarget in order to compute THETA.
@@ -717,7 +724,14 @@ class OPUSim_RelativeSwarmOdometry
 					if( !notarget )
 					{
 						cv::Mat targetpolar = cv::Mat::zeros(2,1,CV_32F);
-						targetpolar.at<float>(0,0) = radius[0][targetIDX[0]];
+						if(radius[0].size())
+						{
+							targetpolar.at<float>(0,0) = radius[0][targetIDX[0]];
+						}
+						else
+						{
+							targetpolar.at<float>(0,0) = 0.0f;
+						}
 						cv::hconcat( polarsInT[0], targetpolar, polarsInT[0]);
 				
 						//std::cout << " target polar : " << targetpolar << std::endl;

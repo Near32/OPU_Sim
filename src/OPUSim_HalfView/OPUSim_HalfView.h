@@ -71,8 +71,8 @@ class OPUSim_HalfView
 		
 		std::string path( "/robot_model_teleop_"+std::to_string(robot_number)+"/");
 		//std::string path( "/robot_model_teleop/");
-		std::string path1( path+"camera1/image_raw");
-		std::string path2( path+"camera2/image_raw");
+		std::string path1( path+"camera4/image_raw");
+		std::string path2( path+"camera1/image_raw");
 		
 		
 		img_sub1 = it->subscribe( path1.c_str(), 1, &OPUSim_HalfView::callback1,this);
@@ -219,7 +219,7 @@ class OPUSim_HalfView
 		
 		cv::namedWindow("HALFVIEW",CV_WINDOW_AUTOSIZE);
 		cv::Mat frameProcessed;
-		
+		cv::Mat zeros;
 		
 		mutexRES.lock();
 		while(continuer)
@@ -258,8 +258,11 @@ class OPUSim_HalfView
 				//----------------------------------------------------
 				//----------------------------------------------------
 				
-				cv::hconcat(frameToProcess[1],frameToProcess[0],frameProcessed);
-				
+				zeros = 0.0f*frameToProcess[0];
+				//cv::hconcat(frameToProcess[1],frameToProcess[0],frameProcessed);
+				cv::hconcat(frameToProcess[0],zeros,frameProcessed);
+				cv::hconcat(frameProcessed,zeros,frameProcessed);
+				cv::hconcat(frameProcessed,frameToProcess[1],frameProcessed);
 				//----------------------------------------------------
 				//----------------------------------------------------
 				//----------------------------------------------------
