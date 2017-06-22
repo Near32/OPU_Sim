@@ -30,7 +30,7 @@
 		<arg name="a" 									value="1.5"/>
 		<arg name="kv" 									value="0.1"/>
 		<arg name="kw" 									value="0.2"/>
-		<arg name="kR" 									value="10.0"/>
+		<arg name="kR" 									value="20.0"/>
 		<arg name="epsilon" 						value="1.0"/>
 		<arg name="debugRSO" 						value="0"/>
 		<arg name="useHalfView" 				value="1"/>
