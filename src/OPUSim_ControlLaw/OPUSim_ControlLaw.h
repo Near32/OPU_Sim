@@ -14,6 +14,7 @@ using namespace std;
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
+#include <std_msgs/Float64.h>
 
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/Pose2D.h>
@@ -1547,6 +1548,7 @@ class OPUSim_ControlLaw
 	image_transport::ImageTransport* it;
 	ros::Publisher twistpub;
 	ros::Publisher pathpub;
+	ros::Publisher loggingpub;
 	image_transport::Subscriber img_sub;
 	image_transport::Subscriber obs_sub;
 	ros::Subscriber odometry_sub;
@@ -1557,6 +1559,7 @@ class OPUSim_ControlLaw
 	geometry_msgs::Pose2D currentPose;
 	geometry_msgs::Twist currentVel;
 	nav_msgs::Path pathmsg;
+	std_msgs::Float64 logmsg;
 	
 	
 	public :
@@ -1704,12 +1707,15 @@ class OPUSim_ControlLaw
 		std::string pathPUB(path+"cmd_vel");
 		std::string pathpathPUB(path+"PATH");
 		std::string pathOdometrySUB( path+"odom_diffdrive");
+		std::string pathloggingPUB(path+"logging");
 		
 		img_sub = it->subscribe( pathSUB.c_str(), 1, &OPUSim_ControlLaw::callback,this);
 		obs_sub = it->subscribe( pathSUB_OBS.c_str(), 1, &OPUSim_ControlLaw::callbackOBS,this);
 		odometry_sub = nh.subscribe( pathOdometrySUB.c_str(), 1, &OPUSim_ControlLaw::callbackOdometry, this);
 		twistpub = nh.advertise<geometry_msgs::Twist>( pathPUB.c_str(), 10);
 		pathpub = nh.advertise<nav_msgs::Path>( pathpathPUB.c_str(), 10);
+		loggingpub = nh.advertise<std_msgs::Float64>( pathloggingPUB.c_str(), 10);
+		
 		pathmsg.header.frame_id="map";
 		/*-------------------------------------------*/
 		/*-------------------------------------------*/
@@ -2222,7 +2228,8 @@ class OPUSim_ControlLaw
 			
 			twistpub.publish(twistmsg);
 			
-			
+			logmsg.data = this->R;
+			loggingpub.publish(logmsg); 
 			
 			//----------------------------------------------------
 			//----------------------------------------------------
