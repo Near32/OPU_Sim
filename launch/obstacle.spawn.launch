@@ -1,0 +1,11 @@
+<launch>
+  <arg name="obstacle_number" default="0"/>
+	<arg name="X" default="2.0"/>
+	<arg name="Y" default="0.0"/>
+	<arg name="Z" default="0.0"/>
+
+
+  <!-- Spawn a model into Gazebo -->
+	<node name="spawn_obstacle$(arg obstacle_number)" pkg="gazebo_ros" type="spawn_model" args="-file $(find OPUSim)/models/obstacle_cylinder_model/model.sdf -sdf -z $(arg Z) -x $(arg X) -y $(arg Y) -model obstacle_$(arg obstacle_number)" />
+	
+</launch>

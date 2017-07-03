@@ -1,0 +1,11 @@
+<launch>
+  <arg name="robot_number" default="0"/>
+	<arg name="X" default="2.0"/>
+	<arg name="Y" default="0.0"/>
+	<arg name="Z" default="0.0"/>
+
+  
+  <!-- Spawn a robot into Gazebo -->
+	<node name="spawn_model$(arg robot_number)" pkg="gazebo_ros" type="spawn_model" args="-file $(find OPUSim)/models/robot_model_teleop_$(arg robot_number)/model.sdf -sdf -z $(arg Z) -x $(arg X) -y $(arg Y) -model robot_$(arg robot_number)" />
+	
+</launch>
