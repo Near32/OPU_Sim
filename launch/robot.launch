@@ -45,7 +45,7 @@
 	<node pkg="OPUSim" type="OPUSim_RelativeSwarmOdometry" name="OPUSim_RelativeSwarmOdometry_$(arg robot_number)" args="$(arg robot_number)" launch-prefix="xterm -e gdb double hyphen args" respawn="false">
 	-->
 	<!---->
-	<node pkg="OPUSim" type="OPUSim_RelativeSwarmOdometry" name="OPUSim_RelativeSwarmOdometry_$(arg robot_number)" args="$(arg robot_number)" respawn="false" launch-prefix="xterm -e gdb --args">
+	<node pkg="OPUSim" type="OPUSim_RelativeSwarmOdometry" name="OPUSim_RelativeSwarmOdometry_$(arg robot_number)" args="$(arg robot_number)" respawn="false">
 	<!---->
 		<rosparam param="robot_number" subst_value="True">$(arg robot_number)</rosparam> 
 		<rosparam param="debug" subst_value="True">$(arg debugRSO)</rosparam> 

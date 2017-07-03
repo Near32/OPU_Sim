@@ -1,12 +1,14 @@
 <launch>
-  <arg name="world_file"  default="$(find OPUSim)/launch/worlds/empty.world"/>
-	<arg name="gui" default="true"/>
-	<arg name="launchController" default="false"/>
-  
+  <arg name="world_file"  			default="$(find OPUSim)/launch/worlds/empty.world"/>
+	<arg name="gui" 							default="true"/>
+	<arg name="launchController" 	default="false"/>
+	<arg name="posX"  						default="1.0"/>
+	<arg name="posY"  						default="2.0"/>
+	
 
 
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
-    <arg name="paused" value="true"/>
+    <arg name="paused" value="false"/>
     <arg name="use_sim_time" value="false"/>
     <arg name="gui" value="$(arg gui)"/>
     <arg name="headless" value="false"/>
@@ -19,7 +21,7 @@
 	
 	
   <!-- Spawn a robot into Gazebo -->
-	<node name="spawn_model0" pkg="gazebo_ros" type="spawn_model" args="-file $(find OPUSim)/models/robot_model_teleop_0/model.sdf -sdf -z 0 -x 1 -y 1 -model robot_0" />
+	<node name="spawn_model0" pkg="gazebo_ros" type="spawn_model" args="-file $(find OPUSim)/models/robot_model_teleop_0/model.sdf -sdf -z 0 -x $(arg posX) -y $(arg posY) -model robot_0" />
 	
 	<include file="$(find OPUSim)/launch/robot.launch">
 		<arg name="robot_number" 				value="0"/>
@@ -33,7 +35,7 @@
 		<arg name="kR" 									value="20.0"/>
 		<arg name="epsilon" 						value="1.0"/>
 		<arg name="debugRSO" 						value="0"/>
-		<arg name="useHalfView" 				value="1"/>
+		<arg name="useHalfView" 				value="0"/>
 		<arg name="Iang" 								value="0.4"/>
 		<arg name="launchController" 		value="$(arg launchController)"/>
 	</include>
