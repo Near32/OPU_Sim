@@ -2,7 +2,7 @@
   <arg name="obstacle_number" default="0"/>
 	<arg name="X" default="2.0"/>
 	<arg name="Y" default="0.0"/>
-	<arg name="Z" default="0.0"/>
+	<arg name="Z" default="0.3"/>
 
 
   <!-- Spawn a model into Gazebo -->

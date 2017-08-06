@@ -1532,6 +1532,7 @@ class OPUSim_ControlLaw
 	float tau;
 	
 	bool emergencyBreak;
+	bool coupledSystem;
 	bool verbose;
 	
 	PIDControllerM<float> pidang;
@@ -1594,7 +1595,19 @@ class OPUSim_ControlLaw
 			std::cout << pathvar << " : not found..." << std::endl;
 		}
 		
-		std::cout << "emergency break : " << this->emergencyBreak << std::endl;
+		pathvar = "OPUSim_ControlLaw_"+std::to_string(this->robot_number)+"/coupledSystem";
+		if( this->nh.hasParam(pathvar.c_str()) )
+		{
+			int eb;
+			this->nh.getParam(pathvar.c_str(),eb);
+			this->coupledSystem = (eb==1?true:false);
+		}
+		else
+		{
+			std::cout << pathvar << " : not found..." << std::endl;
+		}
+		
+		std::cout << "coupled system : " << this->coupledSystem << std::endl;
 		
 		pathvar = "OPUSim_ControlLaw_"+std::to_string(this->robot_number)+"/tresholdDistAccount";
 		if( this->nh.hasParam(pathvar.c_str()) )
@@ -1705,6 +1718,10 @@ class OPUSim_ControlLaw
 		std::string pathSUB(path+"RSO");
 		std::string pathSUB_OBS(path+"OBSTACLES");
 		std::string pathPUB(path+"cmd_vel");
+		if(this->coupledSystem)
+		{
+			pathPUB = path+"cmd_vel_controlLaw";
+		}
 		std::string pathpathPUB(path+"PATH");
 		std::string pathOdometrySUB( path+"odom_diffdrive");
 		std::string pathloggingPUB(path+"logging");

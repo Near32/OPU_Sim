@@ -3,7 +3,7 @@
       
       <model name="obstacle_cylinder_model">
         
-        <static>false</static>
+        <static>true</static>
         
         
         <link name='obstacle'>
