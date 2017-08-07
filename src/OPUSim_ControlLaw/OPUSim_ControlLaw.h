@@ -1605,6 +1605,7 @@ class OPUSim_ControlLaw
 		else
 		{
 			std::cout << pathvar << " : not found..." << std::endl;
+			this->coupledSystem = false;
 		}
 		
 		std::cout << "coupled system : " << this->coupledSystem << std::endl;
@@ -2319,7 +2320,12 @@ class OPUSim_ControlLaw
 		if( abs(thetaObs) > PI/2.0 )	thetaObs = PI/2.0f;
 		
 		float lambda = cos(thetaObs);
-		this->Rdot = (this->desiredR-this->R)*(this->kR/this->desiredR)*(1.0-lambda) + (-1.0/(log(1+this->kR*abs(distObs-0.75*this->tresholdDistAccount))+1e-4f))*(thetaObs/(abs(thetaObs)+1e-4f))*lambda; 
+		//this->Rdot = (this->desiredR-this->R)*(this->kR/this->desiredR)*(1.0-lambda) + (-1.0/(log(1+this->kR*abs(distObs-0.75*this->tresholdDistAccount))+1e-4f))*(thetaObs/(abs(thetaObs)+1e-4f))*lambda;
+		float value = distObs-0.75*this->tresholdDistAccount;
+		if(value <= 0.0f)
+			value = 0.0f;
+			
+		this->Rdot = (this->desiredR-this->R)*(this->kR/this->desiredR)*(1.0-lambda) + (-1.0/(log(1+this->kR*value)+1e-4f))*(thetaObs/(abs(thetaObs)+1e-4f))*lambda; 
 		
 		//update :
 		this->R += dt*this->Rdot;
