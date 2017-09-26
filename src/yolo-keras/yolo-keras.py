@@ -27,6 +27,7 @@ from keras.optimizers import SGD
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+import time
 
 #get_ipython().magic('matplotlib inline')
 
@@ -51,7 +52,7 @@ GRID_H, GRID_W = 13 , 13
 BATCH_SIZE = 8
 BOX = 5
 CLASS = 20
-THRESHOLD = 0.2
+THRESHOLD = 0.035
 ANCHORS = '1.08,1.19,  3.42,4.41,  6.63,11.38,  9.42,5.11,  16.62,10.52'
 ANCHORS = [float(ANCHORS.strip()) for ANCHORS in ANCHORS.split(',')]
 SCALE_NOOB, SCALE_CONF, SCALE_COOR, SCALE_PROB = 0.5, 5.0, 5.0, 1.0
@@ -136,9 +137,9 @@ for i in range(len(model.layers)):
 # ## Preprocess VOC data
 
 # In[7]:
-
+'''
 all_img = parse_annotation(ann_dir)
-
+'''
 
 # ## Perform training
 
@@ -326,7 +327,15 @@ def test_on_image() :
 
 	# In[13]:
 
-	image = cv2.imread('images/test2.png')
+	#image = cv2.imread('images/test2.png')
+	#image = cv2.imread('images/car2.jpeg')
+	#image = cv2.imread('images/car3.jpg')
+	#image = cv2.imread('images/car4.jpg')
+	#image = cv2.imread('images/car5.jpg')
+	#image = cv2.imread('images/car.png')
+	#image = cv2.imread('images/car6.jpg')
+	image = cv2.imread('images/car7.jpg')
+	#image = cv2.imread('images/bottle1.jpeg')
 	#image = cv2.imread('images/test1.png')
 	#image = cv2.imread('images/test.png')
 	#image = cv2.imread('images/dog.jpg')
@@ -373,14 +382,22 @@ def test_on_cam() :
 	
 	continuer = True	
 	while continuer:
+		  start = time.time()
 		  # Capture frame-by-frame
 		  ret, frame = cap.read()
 
 		  # Our operations on the frame come here
 		  img = _on_image(frame)
 		  
+		  end = time.time()
+		  freq = 1.0/(end-start)
+		  size = 1
+		  thickness = 2
+		  color = (255,0,0) 
+		  cv2.putText(frame, '{} Hz'.format(int(freq) ), (10,25),cv2.FONT_HERSHEY_SIMPLEX, size, color, thickness )
 		  # Display the resulting frame
-		  cv2.imshow('frame',img)
+		  #cv2.imshow('frame',img)
+		  cv2.imshow('frame1',frame)
 		  if cv2.waitKey(1) & 0xFF == ord('q'):
 		      continuer = False
 
@@ -438,5 +455,5 @@ def test_on_video() :
 
 
 #test_on_video()
-#test_on_image()
-test_on_cam()
+test_on_image()
+#test_on_cam()
