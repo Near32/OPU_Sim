@@ -27,7 +27,10 @@ from keras.optimizers import SGD
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+from picamera.array import PiRGBArray
+from picamera import PiCamera
 import time
+import cv2
 
 #get_ipython().magic('matplotlib inline')
 
@@ -405,6 +408,47 @@ def test_on_cam() :
 	cap.release()
 	cv2.destroyAllWindows()
 
+def test_on_rpicam() :
+	model.load_weights("weights.hdf5")
+	# initialize the camera and grab a reference to the raw camera capture
+	camera = PiCamera()
+	camera.resolution = (640, 480)
+	camera.framerate = 30
+	rawCapture = PiRGBArray(camera, size=(640, 480))
+	 
+	# allow the camera to warmup
+	time.sleep(1)
+	 
+	# capture frames from the camera
+	for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
+		start = time.time()
+		# grab the raw NumPy array representing the image, then initialize the timestamp
+		# and occupied/unoccupied text
+		image = frame.array
+	 	
+		# clear the stream in preparation for the next frame
+		rawCapture.truncate(0)
+	 
+		# if the `q` key was pressed, break from the loop
+		key = cv2.waitKey(1) & 0xFF
+	 	if key == ord("q"):
+			break
+
+		# Our operations on the frame come here
+		img = _on_image(image)
+		
+		end = time.time()
+		freq = 1.0/(end-start)
+		size = 1
+		thickness = 2
+		color = (255,0,0) 
+		cv2.putText(image, '{} Hz'.format(int(freq) ), (10,25),cv2.FONT_HERSHEY_SIMPLEX, size, color, thickness )
+		# Display the resulting frame
+		# show the frame
+		outimage = cv2.resize(image, (160,120) )
+		cv2.imshow("Frame", outimage)
+	
+		
 # ## Perform detection on video
 
 # In[14]:
@@ -455,5 +499,6 @@ def test_on_video() :
 
 
 #test_on_video()
-test_on_image()
+#test_on_image()
 #test_on_cam()
+test_on_rpicam()
