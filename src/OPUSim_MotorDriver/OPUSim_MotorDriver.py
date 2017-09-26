@@ -30,12 +30,10 @@ def shuttingdown() :
 
 
 if __name__=="__main__":
-    parser = argparse.ArgumentParser()
+	parser = argparse.ArgumentParser()
 	parser.add_argument("--debug", action='store_true', help="debug mode.")
 	parser.add_argument("-number", action='store', dest='number', type=int, default=0, help="index number of the teleoperated robot.")
-	
 	args = parser.parse_args()
-	
 
 	sub = rospy.Subscriber('/robot_model_teleop_{}/cmd_vel'.format(args.number), Twist, callbackCOMMAND )
 	rospy.init_node('OPUSim_MotorDriver_{}'.format(args.number))
