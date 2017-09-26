@@ -3,7 +3,7 @@
       
       <model name="target_model">
         
-        <static>false</static>
+        <static>true</static>
         
         <!--
         <link name='chassis'>
