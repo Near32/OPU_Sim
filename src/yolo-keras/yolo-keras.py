@@ -47,8 +47,8 @@ exec( open("utils.py").read() )
 LABELS = ['aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car', 'cat', 'chair', 'cow', 'diningtable', 'dog', 'horse', 'motorbike', 'person', 'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor']
 COLORS = [(43,206,72),(255,204,153),(128,128,128),(148,255,181),(143,124,0),(157,204,0),(194,0,136),(0,51,128),(255,164,5),(255,168,187),(66,102,0),(255,0,16),(94,241,242),(0,153,143),(224,255,102),(116,10,255),(153,0,0),(255,255,128),(255,255,0),(255,80,5)]
 
-NORM_H, NORM_W = 416, 416
-GRID_H, GRID_W = 13 , 13
+NORM_H, NORM_W = 208, 208#416, 416
+GRID_H, GRID_W = 6, 6#13 , 13
 BATCH_SIZE = 8
 BOX = 5
 CLASS = 20
@@ -66,7 +66,7 @@ weight_reader = WeightReader(wt_path)
 model = Sequential()
 
 # Layer 1
-model.add(Conv2D(16, (3,3), strides=(1,1), padding='same', use_bias=False, input_shape=(416,416,3)))
+model.add(Conv2D(16, (3,3), strides=(1,1), padding='same', use_bias=False, input_shape=(NORM_H,NORM_W,3)))#(416,416,3)))
 model.add(BatchNormalization())
 model.add(LeakyReLU(alpha=0.1))
 model.add(MaxPooling2D(pool_size=(2, 2)))
@@ -348,7 +348,7 @@ def test_on_image() :
 
 	plt.figure(figsize=(10,10))
 
-	input_image = cv2.resize(image, (416, 416))
+	input_image = cv2.resize(image, (NORM_H, NORM_W))
 	input_image = input_image / 255.
 	input_image = input_image[:,:,::-1]
 	input_image = np.expand_dims(input_image, 0)
@@ -361,7 +361,7 @@ def test_on_image() :
 
 
 def _on_image(image) :
-	input_image = cv2.resize(image, (416, 416))
+	input_image = cv2.resize(image, (NORM_H, NORM_W))
 	input_image = input_image / 255.
 	input_image = input_image[:,:,::-1]
 	input_image = np.expand_dims(input_image, 0)
