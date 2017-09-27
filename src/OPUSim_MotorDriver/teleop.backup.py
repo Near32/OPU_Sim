@@ -4,20 +4,20 @@
 
 import RPi.GPIO as GPIO # import GPIO librery
 from test import MotorController, vw2rr
-from geometry_msgs.msg import Twist
+#from geometry_msgs.msg import Twist
 
 import sys, select, termios, tty
 
 
-m1A = 18#17
-m1B = 23#27
+m1A = 18
+m1B = 23
 m1E = 4
 
 mc1 = MotorController(m1A,m1B,m1E)
 
-m2A = 27
-m2B = 17
-m2E = 22#4
+m2A = 17
+m2B = 27
+m2E = 22
 
 mc2 = MotorController(m2A,m2B,m2E)
 
@@ -95,8 +95,8 @@ if __name__=="__main__":
 	#pub = rospy.Publisher('cmd_vel', Twist, queue_size = 1)
 	#rospy.init_node('teleop_twist_keyboard')
 
-	speed = 0.5#rospy.get_param("~speed", 0.5)
-	turn = 1.0#rospy.get_param("~turn", 1.0)
+	speed = 2.5#rospy.get_param("~speed", 0.5)
+	turn = 20.0#rospy.get_param("~turn", 1.0)
 	x = 0
 	y = 0
 	z = 0
@@ -117,7 +117,7 @@ if __name__=="__main__":
 				speed = speed * speedBindings[key][0]
 				turn = turn * speedBindings[key][1]
 
-				print vels(speed,turn)
+				print vels(key,speed,turn)
 				if (status == 14):
 					print msg
 				status = (status + 1) % 15
@@ -129,22 +129,31 @@ if __name__=="__main__":
 				if (key == '\x03'):
 					break
 
-			
-			twist = Twist()
-			twist.linear.x = x*speed; twist.linear.y = y*speed; twist.linear.z = z*speed;
-			twist.angular.x = 0; twist.angular.y = 0; twist.angular.z = th*turn
+			twist = dict()#Twist()
+			#twist.linear.x = x*speed; twist.linear.y = y*speed; twist.linear.z = z*speed;
+			twist['x'] = x*speed
+			#twist.angular.x = 0; twist.angular.y = 0; twist.angular.z = th*turn
+			twist['rz'] = th*turn			
 			#pub.publish(twist)
 			
-			wheelvelocities = vw2rr(twist.linear.x, twist.angular.z, l=0.10, R=0.025)
+			#wheelvelocities = vw2rr(twist.linear.x, twist.angular.z, l=0.10, R=0.025)
+			wheelvelocities = vw2rr(twist['x'], twist['rz'], l=0.10, R=0.025)
 			
-			mc1.setThrust(wheelvelocities[0])
-			mc1.setThrust(wheelvelocities[1])
+			mc1.setThrust(int(wheelvelocities[0]))
+			mc2.setThrust(int(wheelvelocities[1]))
 			
+			print wheelvelocities
 			#rospy.loginfo(wheelvelocities)
 			
 
-	except:
+	except Exception as e:
 		print e
+
+	#finally:
+		#twist = Twist()
+		#twist.linear.x = 0; twist.linear.y = 0; twist.linear.z = 0
+		#twist.angular.x = 0; twist.angular.y = 0; twist.angular.z = 0
+		#pub.publish(twist)
 
 termios.tcsetattr(sys.stdin, termios.TCSADRAIN, settings)
 
