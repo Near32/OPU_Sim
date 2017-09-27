@@ -55,7 +55,7 @@ GRID_H, GRID_W = 6, 6#13 , 13
 BATCH_SIZE = 8
 BOX = 5
 CLASS = 20
-THRESHOLD = 0.035
+THRESHOLD = 0.01
 ANCHORS = '1.08,1.19,  3.42,4.41,  6.63,11.38,  9.42,5.11,  16.62,10.52'
 ANCHORS = [float(ANCHORS.strip()) for ANCHORS in ANCHORS.split(',')]
 SCALE_NOOB, SCALE_CONF, SCALE_COOR, SCALE_PROB = 0.5, 5.0, 5.0, 1.0
@@ -412,9 +412,9 @@ def test_on_rpicam() :
 	model.load_weights("weights.hdf5")
 	# initialize the camera and grab a reference to the raw camera capture
 	camera = PiCamera()
-	camera.resolution = (640, 480)
+	camera.resolution = (1088, 960)
 	camera.framerate = 30
-	rawCapture = PiRGBArray(camera, size=(640, 480))
+	rawCapture = PiRGBArray(camera, size=(1088, 960))
 	 
 	# allow the camera to warmup
 	time.sleep(1)
@@ -442,10 +442,10 @@ def test_on_rpicam() :
 		size = 1
 		thickness = 2
 		color = (255,0,0) 
-		cv2.putText(image, '{} Hz'.format(int(freq) ), (10,25),cv2.FONT_HERSHEY_SIMPLEX, size, color, thickness )
+		cv2.putText(image, '{} Hz'.format(freq ), (10,25),cv2.FONT_HERSHEY_SIMPLEX, size, color, thickness )
 		# Display the resulting frame
 		# show the frame
-		outimage = cv2.resize(image, (160,120) )
+		outimage = cv2.resize(image, (640,480) )
 		cv2.imshow("Frame", outimage)
 	
 		
