@@ -457,8 +457,9 @@ def test_on_rpicam() :
 		cv2.putText(image, '{} Hz'.format(freq ), (10,25),cv2.FONT_HERSHEY_SIMPLEX, size, color, thickness )
 		# Display the resulting frame
 		# show the frame
-		outimage = cv2.resize(image, (640,480) )
-		cv2.imshow("Frame", outimage)
+		#outimage = cv2.resize(image, (320,240) )
+		#cv2.imshow("Frame", outimage)
+		cv2.imshow("Frame", image)	
 
 		#HANDLE THE OUTPUT RESULTS HERE :
 	
