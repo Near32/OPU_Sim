@@ -1,0 +1,3 @@
+[submodule "src/EKF_DATMO"]
+	path = src/EKF_DATMO
+	url = https://github.com/Near32/EKF_DATMO.git
