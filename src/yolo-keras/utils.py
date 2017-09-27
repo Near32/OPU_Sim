@@ -104,6 +104,65 @@ def interpret_netout(image, netout):
             
     return image
 
+def interpret_netoutbis(image, netout):
+    boxes = []
+
+    # interpret the output by the network
+    for row in range(GRID_H):
+        for col in range(GRID_W):
+            for b in range(BOX):
+                box = BoundBox(CLASS)
+
+                # first 5 weights for x, y, w, h and confidence
+                box.x, box.y, box.w, box.h, box.c = netout[row,col,b,:5]
+
+                box.x = (col + sigmoid(box.x)) / GRID_W
+                box.y = (row + sigmoid(box.y)) / GRID_H
+                box.w = ANCHORS[2 * b + 0] * np.exp(box.w) / GRID_W
+                box.h = ANCHORS[2 * b + 1] * np.exp(box.h) / GRID_H
+                box.c = sigmoid(box.c)
+
+                # last 20 weights for class likelihoods
+                classes = netout[row,col,b,5:]
+                box.probs = softmax(classes) * box.c
+                box.probs *= box.probs > THRESHOLD
+
+                boxes.append(box)
+
+    # suppress non-maximal boxes
+    for c in range(CLASS):
+        sorted_indices = list(reversed(np.argsort([box.probs[c] for box in boxes])))
+
+        for i in range(len(sorted_indices)):
+            index_i = sorted_indices[i]
+            
+            if boxes[index_i].probs[c] == 0: 
+                continue
+            else:
+                for j in range(i+1, len(sorted_indices)):
+                    index_j = sorted_indices[j]
+                    
+                    if boxes[index_i].iou(boxes[index_j]) >= 0.4:
+                        boxes[index_j].probs[c] = 0
+
+    # draw the boxes using a threshold and output results :
+    results = []
+    for box in boxes:
+        max_indx = np.argmax(box.probs)
+        max_prob = box.probs[max_indx]
+        
+        if max_prob > THRESHOLD:
+            xmin  = int((box.x - box.w/2) * image.shape[1])
+            xmax  = int((box.x + box.w/2) * image.shape[1])
+            ymin  = int((box.y - box.h/2) * image.shape[0])
+            ymax  = int((box.y + box.h/2) * image.shape[0])
+
+
+            cv2.rectangle(image, (xmin,ymin), (xmax,ymax), COLORS[max_indx], 2)
+            cv2.putText(image, '{} : {}%'.format(LABELS[max_indx], int(100.0*max_prob)), (xmin, ymin - 12), 0, 1e-3 * image.shape[0], (0,255,0), 2)
+            results.append( (LABELS[max_indx], [xmin,ymin, xmax,ymax] ) )
+
+    return image, results
 def parse_annotation(ann_dir):
     all_img = []
     

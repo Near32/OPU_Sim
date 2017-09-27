@@ -374,6 +374,17 @@ def _on_image(image) :
 	img = img[:,:,::-1]
 	return img
 
+def _on_imagebis(image) :
+	input_image = cv2.resize(image, (NORM_H, NORM_W))
+	input_image = input_image / 255.
+	input_image = input_image[:,:,::-1]
+	input_image = np.expand_dims(input_image, 0)
+	netout = model.predict(input_image)
+
+	img,results = interpret_netoutbis(image, netout[0])
+	img = img[:,:,::-1]
+	return img, results
+
 def test_on_cam() :
 	model.load_weights("weights.hdf5")
 	cap = cv2.VideoCapture(0)
@@ -435,7 +446,7 @@ def test_on_rpicam() :
 			break
 
 		# Our operations on the frame come here
-		img = _on_image(image)
+		img, results = _on_imagebis(image)
 		
 		end = time.time()
 		freq = 1.0/(end-start)
@@ -447,6 +458,8 @@ def test_on_rpicam() :
 		# show the frame
 		outimage = cv2.resize(image, (640,480) )
 		cv2.imshow("Frame", outimage)
+
+		#HANDLE THE OUTPUT RESULTS HERE :
 	
 		
 # ## Perform detection on video
