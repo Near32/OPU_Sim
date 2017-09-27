@@ -31,12 +31,12 @@ exec( open("utils.py").read() )
 LABELS = ['aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car', 'cat', 'chair', 'cow', 'diningtable', 'dog', 'horse', 'motorbike', 'person', 'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor']
 COLORS = [(43,206,72),(255,204,153),(128,128,128),(148,255,181),(143,124,0),(157,204,0),(194,0,136),(0,51,128),(255,164,5),(255,168,187),(66,102,0),(255,0,16),(94,241,242),(0,153,143),(224,255,102),(116,10,255),(153,0,0),(255,255,128),(255,255,0),(255,80,5)]
 
-NORM_H, NORM_W = 208, 208#416, 416
-GRID_H, GRID_W = 6, 6#13 , 13
+NORM_H, NORM_W = 312, 312#416, 416
+GRID_H, GRID_W = 9, 9#13 , 13
 BATCH_SIZE = 8
 BOX = 5
 CLASS = 20
-THRESHOLD = 0.01
+THRESHOLD = 0.03
 ANCHORS = '1.08,1.19,  3.42,4.41,  6.63,11.38,  9.42,5.11,  16.62,10.52'
 ANCHORS = [float(ANCHORS.strip()) for ANCHORS in ANCHORS.split(',')]
 SCALE_NOOB, SCALE_CONF, SCALE_COOR, SCALE_PROB = 0.5, 5.0, 5.0, 1.0
@@ -143,52 +143,11 @@ def _on_imagebis(image) :
 	img,results = interpret_netoutbis(image, netout[0])
 	img = img[:,:,::-1]
 	return img, results
-
-def test_on_rpicam() :
-	model.load_weights("weights.hdf5")
-	# initialize the camera and grab a reference to the raw camera capture
-	camera = PiCamera()
-	camera.resolution = (1088, 960)
-	camera.framerate = 30
-	rawCapture = PiRGBArray(camera, size=(1088, 960))
-	 
-	# allow the camera to warmup
-	time.sleep(1)
-	 
-	# capture frames from the camera
-	for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
-		start = time.time()
-		# grab the raw NumPy array representing the image, then initialize the timestamp
-		# and occupied/unoccupied text
-		image = frame.array
-	 	
-		# clear the stream in preparation for the next frame
-		rawCapture.truncate(0)
-	 
-		# if the `q` key was pressed, break from the loop
-		key = cv2.waitKey(1) & 0xFF
-	 	if key == ord("q"):
-			break
-
-		# Our operations on the frame come here
-		img, results = _on_imagebis(image)
-		
-		end = time.time()
-		freq = 1.0/(end-start)
-		size = 1
-		thickness = 2
-		color = (255,0,0) 
-		cv2.putText(image, '{} Hz'.format(freq ), (10,25),cv2.FONT_HERSHEY_SIMPLEX, size, color, thickness )
-		# Display the resulting frame
-		# show the frame
-		outimage = cv2.resize(image, (640,480) )
-		cv2.imshow("Frame", outimage)
-
-		#HANDLE THE OUTPUT RESULTS HERE :
-		publishModelStates(results)
 	
 
 def publishModelStates(results,publisher) :
+	global buffstate
+	
 	modelstate = ModelStates()
 	dummytwist = Twist()
 	state = None
@@ -197,7 +156,7 @@ def publishModelStates(results,publisher) :
 			state = buffstate[-1]
 			buffstate = []
 	# for synchro purpose : add the current state of the robot in the modelstate :
-	robotstateindex = [ index for index in range(len(state)) if 'self' in state.name[index] ]
+	robotstateindex = [ index for index in range(len(state.name)) if 'self' in state.name[index] ][0]
 	modelstate.name.append('self')
 	modelstate.pose.append( state.pose[robotstateindex] )
 	modelstate.twist.append(dummytwist)
@@ -210,7 +169,7 @@ def publishModelStates(results,publisher) :
 			#let us add this to the modelstate as the target :
 			#Compute its distance :
 			minx = np.min( [pos[0],pos[2] ])
-			meany = np.mean( [ pos[1], pose[3] ] )
+			meany = np.mean( [ pos[1], pos[3] ] )
 
 			r, theta = uv2rtheta(minx,meany)
 			x = r*np.cos(theta)
@@ -223,7 +182,7 @@ def publishModelStates(results,publisher) :
 			modelstate.pose.append( p)
 			modelstate.twist.append(dummytwist)
 
-	publisher.publish(modelstate,publisher=pubmodelstate)
+	publisher.publish(modelstate)
 
 
 
@@ -268,5 +227,49 @@ rospy.on_shutdown(shuttingdown)
 subState = rospy.Subscriber( '/robot_model_teleop_{}/DATMO'.format(args.number), ModelStates, callbackState )
 pubmodelstate = rospy.Publisher( '/robot_model_teleop_{}/YOLO'.format(args.number), ModelStates, queue_size=10 )
 
+
+def test_on_rpicam() :
+	model.load_weights("weights.hdf5")
+	# initialize the camera and grab a reference to the raw camera capture
+	camera = PiCamera()
+	camera.vflip = True
+	camera.resolution = (1088, 960)
+	camera.framerate = 30
+	rawCapture = PiRGBArray(camera, size=(1088, 960))
+	 
+	# allow the camera to warmup
+	time.sleep(1)
+	 
+	# capture frames from the camera
+	for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
+		start = time.time()
+		# grab the raw NumPy array representing the image, then initialize the timestamp
+		# and occupied/unoccupied text
+		image = frame.array
+	 	
+		# clear the stream in preparation for the next frame
+		rawCapture.truncate(0)
+	 
+		# if the `q` key was pressed, break from the loop
+		key = cv2.waitKey(1) & 0xFF
+	 	if key == ord("q"):
+			break
+
+		# Our operations on the frame come here
+		img, results = _on_imagebis(image)
+		
+		end = time.time()
+		freq = 1.0/(end-start)
+		size = 1
+		thickness = 2
+		color = (255,0,0) 
+		cv2.putText(image, '{} Hz'.format(freq ), (10,25),cv2.FONT_HERSHEY_SIMPLEX, size, color, thickness )
+		# Display the resulting frame
+		# show the frame
+		outimage = cv2.resize(image, (640,480) )
+		cv2.imshow("Frame", outimage)
+
+		#HANDLE THE OUTPUT RESULTS HERE :
+		publishModelStates(results,publisher=pubmodelstate)
 
 test_on_rpicam()
