@@ -3,7 +3,6 @@ from keras.layers import Reshape, Activation, Conv2D, Input, MaxPooling2D, Batch
 from keras.layers.advanced_activations import LeakyReLU
 from keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard
 from keras.optimizers import SGD
-import matplotlib.pyplot as plt
 import numpy as np
 import os
 from picamera.array import PiRGBArray
@@ -13,7 +12,7 @@ import cv2
 
 import rospy
 from gazebo_msgs.msg import ModelStates
-from geometry_msgs.msg import Pose
+from geometry_msgs.msg import Pose, Twist
 
 
 
