@@ -1,0 +1,72 @@
+<launch>
+	<!-- declaration of arguments -->
+	<arg name="robot_number" default="0" doc="Number of the robot we want to launch."/>
+	
+	<arg name="emergencyBreak" default="0" doc="Everything will be launched except that the cmd_vel-related topic is publishing 0."/>
+	<arg name="tresholdDistAccount" default="1.2" doc="Treshold for the distance of obstacles that we take into account for obstacle avoidance."/>
+	<arg name="a" default="1.0" doc="coefficient : negative when N lesser than 2."/>
+	<arg name="kv" default="0.1" doc="coefficient to the radial velocity : negative when N lesser than 2."/>
+	<arg name="kw" default="0.2" doc="coefficient to the agular velocity : negative when Omega is negative."/>
+	<arg name="kR" default="10.0" doc="coefficient to the radius update control law."/>
+	<arg name="R" default="2.0" doc="desired radius of the trajectory circle."/>
+	<arg name="epsilon" default="1.0" doc="coupling strength : negative when N lesser or equal to 2."/>
+	<arg name="Omega" default="2.0" doc="natural frequency."/>
+	
+	<arg name="Plin" default="0.1" doc="P coefficient linear velocity."/>
+	<arg name="Ilin" default="0.0" doc="I coefficient linear velocity."/>
+	<arg name="Pang" default="1.0" doc="P coefficient angular velocity."/>
+	<arg name="Iang" default="0.0" doc="I coefficient angular velocity."/>
+	
+	<arg name="launchController" default="true"/>
+	<arg name="launchYOLO" default="false"/>
+	
+	<group if="$(arg launchYOLO)">
+		<node pkg="OPUSim" name="ROS_YOLO_$(arg robot_number)" type="yolo-keras/ros_wrapper_yolo_keras.py" 
+		args="-number $(arg robot_number)"
+	 respawn="true"/>
+	</group>
+	<group unless="$(arg launchYOLO)">
+		<node pkg="OPUSim" name="ROS_COLORS_$(arg robot_number)" type="yolo-keras/ros_wrapper_colors.py" 
+		args="-number $(arg robot_number)"
+	 respawn="true"/>
+	</group>
+
+
+	<node pkg="OPUSim" name="ROS_EKF_DATMO_$(arg robot_number)" type="EKF_DATMO/ros_wrapper.py" 
+		args="-number $(arg robot_number)
+		-tresholdDistAccount $(arg tresholdDistAccount)"
+	 respawn="true"/>
+
+
+	<group if="$(arg launchController)">
+		<!--
+		<node pkg="OPUSim" type="OPUSim_ControlLaw" name="OPUSim_ControlLaw_$(arg robot_number)" args="$(arg robot_number)" launch-prefix="xterm -e gdb db args" respawn="false">
+		-->
+		<!---->
+		<node pkg="OPUSim" name="OPUSim_ControlLaw_Real_$(arg robot_number)" type="OPUSim_ControlLaw_Real/OPUSim_ControlLaw_Real.py" 
+			args="-number $(arg robot_number)
+			-emergencyBrek $(arg emergencyBreak)
+			-tDA $(arg tresholdDistAccount)
+			-r $(arg R)
+			-a $(arg a)
+			-kv $(arg kv)
+			-kw $(arg kw)
+			-kR $(arg kR)
+			-epsilon $(arg epsilon)
+			-Omega $(arg Omega)"
+		 respawn="true"/>
+		 	<!--
+			-Plin $(arg Plin)
+			-Ilin $(arg Ilin)
+			-Pang $(arg Pang)
+			-Iang $(arg Iang)
+			-->
+
+		 <node pkg="OPUSim" name="OPUSim_MotorDriver_$(arg robot_number)" type="OPUSim_MotorDriver/OPUSim_MotorDriver.py" 
+			args="-number $(arg robot_number)"
+		 respawn="true"/>
+	</group>
+
+	<!---->
+	
+</launch>
