@@ -10,9 +10,9 @@ from std_msgs.msg import Float64
 import argparse
 
 parser = argparse.ArgumentParser(description="OPUSim_ControlLaw_Real.")
-parser.add_argument('-r', help='radius distance from the target.', dest='radius', type=float, default=2.0)
+parser.add_argument('-r', help='radius distance from the target.', dest='radius', type=float, default=0.01)
 parser.add_argument('-Omega', help='natural frequency of the oscillators.', dest='Omega', type=float,	default=2.0)
-parser.add_argument('-tDA', help='threshold distance to account for obstacles.', dest='thresholdDistAccount', type=float, default=0.6)
+parser.add_argument('-tDA', help='threshold distance to account for obstacles.', dest='thresholdDistAccount', type=float, default=0.005)
 parser.add_argument('-a', help='proportional gain to the radius controller.', dest='a', type=float, default=1.5)
 parser.add_argument('-kv', help='proportional gain for the linear velocity controller.', dest='kv', type=float, default=0.1)
 parser.add_argument('-kw', help='proportional gain for the angular velocity controller.', dest='kw', type=float, default=0.2)
@@ -22,6 +22,7 @@ parser.add_argument('-mass', help='fictive mass to use in the kinetic energy com
 parser.add_argument('-beta', help='factor that levels the equilibrium constrains.', dest='beta', default=1e0 )
 parser.add_argument('-gamma', help='factor that levels the penalization over actions.', dest='gamma', default=-1e1 )
 parser.add_argument('-number', help='index number of the teleoperated robot.', dest='number', default=0 )
+parser.add_argument('-scaler', help='scaler .', dest='scaler', default=0.001 )
 
 args, unknown = parser.parse_known_args()
 
@@ -339,8 +340,8 @@ while not rospy.is_shutdown() :
 				
 	if selfcontrollaw is not None :
 		tcmd = Twist()
-		tcmd.linear.x = selfcontrollaw[0,0]
-		tcmd.angular.z = selfcontrollaw[1,0]
+		tcmd.linear.x = selfcontrollaw[0,0]*args.scaler
+		tcmd.angular.z = selfcontrollaw[1,0]*args.scaler
 
 	if tcmd is not None :
 		pubCmd.publish(tcmd)

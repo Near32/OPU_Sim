@@ -9,9 +9,10 @@ def vw2rr(v,w,l=0.10,R=0.05) :
 	return [r1,r2]
 	
 class MotorController :
-	def __init__(self,mA,mB,mE,initThrust=0) :
+	def __init__(self,mA,mB,mE,initThrust=0,rangeMax=100) :
 		GPIO.setmode(GPIO.BCM)
 		self.log = 0
+		self.rangeMax = rangeMax
 		#NAMING :
 		self.Motor1A = mA
 		self.Motor1B = mB
@@ -27,7 +28,7 @@ class MotorController :
 	
 		#PWM SETTING :
 		self.thrust = initThrust
-		self.pwm=GPIO.PWM(self.Motor1E,100) # configuring Enable pin for PWM
+		self.pwm=GPIO.PWM(self.Motor1E,self.rangeMax) # configuring Enable pin for PWM
 		self.pwm.start(self.thrust) # starting it with (initThrust)% dutycycle
 		
 		self.continuer = True
@@ -43,14 +44,14 @@ class MotorController :
 				GPIO.output(self.Motor1A,GPIO.HIGH)
 				GPIO.output(self.Motor1E,GPIO.HIGH)
 			
-				self.pwm.ChangeDutyCycle(thrust)
+				self.pwm.ChangeDutyCycle(thrust/100*self.rangeMax)
 			elif thrust < 0 and thrust >= -100 :
 				GPIO.setup(self.Motor1E,GPIO.OUT)
 				GPIO.output(self.Motor1A,GPIO.LOW)
 				GPIO.output(self.Motor1B,GPIO.HIGH)
 				GPIO.output(self.Motor1E,GPIO.HIGH)
 			
-				self.pwm.ChangeDutyCycle(-thrust)
+				self.pwm.ChangeDutyCycle(-thrust/100*self.rangeMax)
 			elif thrust == 0 :
 				GPIO.setup(self.Motor1E,GPIO.OUT)
 				GPIO.output(self.Motor1A,GPIO.LOW)
@@ -75,15 +76,14 @@ def main() :
 	GPIO.setmode(GPIO.BCM)
 
 	#NAMING :
-	'''
+	
 	Motor1A = 17 # set GPIO-02 as Input 1 of the controller IC
 	Motor1B = 27 # set GPIO-03 as Input 2 of the controller IC
 	Motor1E = 22 # set GPIO-04 as Enable pin 1 of the controller IC
-	'''
-	Motor1A = 18#2 # set GPIO-02 as Input 1 of the controller IC
-	Motor1B = 23 # set GPIO-03 as Input 2 of the controller IC
-	Motor1E = 4 # set GPIO-04 as Enable pin 1 of the controller IC
 	
+	Motor2A = 18#2 # set GPIO-02 as Input 1 of the controller IC
+	Motor2B = 23 # set GPIO-03 as Input 2 of the controller IC
+	Motor2E = 4 # set GPIO-04 as Enable pin 1 of the controller IC
 	'''
 	#SETTING :
 	GPIO.setup(Motor1A,GPIO.OUT)
@@ -131,31 +131,33 @@ def main() :
 	GPIO.cleanup()
 	'''
 	
-	mc = MotorController(Motor1A,Motor1B,Motor1E)
+	mc1 = MotorController(Motor1A,Motor1B,Motor1E,rangeMax=100)
+	mc2 = MotorController(Motor2A,Motor2B,Motor2E,rangeMax=100)
 	print "GO forward"
-	mc.setThrust(50)
-	sleep(2)
+	mc1.setThrust(1)
+	mc2.setThrust(1)
+	sleep(1)
 	
 	print "STOP"
-	mc.setThrust(0)
-	sleep(2)
+	mc1.setThrust(0)
+	mc2.setThrust(0)
+	sleep(1)
 
 	print "GO backward"
-	mc.setThrust(-50)
-		
-	#while True :
-	sleep(4)
+	mc1.setThrust(-1)
+	mc2.setThrust(-1)
 	
-	print "GO forward"
-	mc.setThrust(50)
-	sleep(2)
+	#while True :
+	sleep(1)
 	
 	print "STOP"
-	mc.setThrust(0)
+	mc1.setThrust(0)
+	mc2.setThrust(0)
 	sleep(2)
 
 	print "Now stop"
-	mc.shutdown()
+	mc1.shutdown()
+	mc2.shutdown()
 	
 	GPIO.cleanup()
 	

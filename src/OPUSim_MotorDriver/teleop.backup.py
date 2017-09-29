@@ -8,18 +8,19 @@ from test import MotorController, vw2rr
 
 import sys, select, termios, tty
 
+rangemax = 100
 
 m1A = 18
 m1B = 23
 m1E = 4
 
-mc1 = MotorController(m1A,m1B,m1E)
+mc1 = MotorController(m1A,m1B,m1E,rangeMax=rangemax)
 
 m2A = 17
 m2B = 27
 m2E = 22
 
-mc2 = MotorController(m2A,m2B,m2E)
+mc2 = MotorController(m2A,m2B,m2E,rangeMax=rangemax)
 
 def shutdown() :
 	GPIO.cleanup()
@@ -95,8 +96,8 @@ if __name__=="__main__":
 	#pub = rospy.Publisher('cmd_vel', Twist, queue_size = 1)
 	#rospy.init_node('teleop_twist_keyboard')
 
-	speed = 2.5#rospy.get_param("~speed", 0.5)
-	turn = 20.0#rospy.get_param("~turn", 1.0)
+	speed = 1.5#rospy.get_param("~speed", 0.5)
+	turn = 10.0#rospy.get_param("~turn", 1.0)
 	x = 0
 	y = 0
 	z = 0

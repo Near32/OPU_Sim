@@ -65,11 +65,11 @@ def publishModelStates(results,publisher) :
 
 
 
-def uv2rtheta(u,v,rangeu=NORM_H/2,rangev=NORM_W,offsettheta=-65) :
+def uv2rtheta(u,v,rangeu=NORM_H/2,rangev=NORM_W,offsettheta=-65,scaler=0.55) :
 	# u \in [rangeu, 2*rangeu]
 	u = 2*rangeu-u
 	# u \in [0, rangeu] u--> 0 == object near
-	r = 1.0/(rangeu-u)
+	r = scaler/(rangeu-u)
 
 	rangetheta = 175
 	v = rangev - v
@@ -152,6 +152,9 @@ def _on_imagebis(im) :
 				n+= 1
 				meanx += i
 				meany += j
+	if n == 0 :
+		return res, results
+
 	meanx /= n/scale
 	meany /= n/scale
 	rospy.loginfo(' u,v = {} {} // {}'.format( meanx, meany, mask.shape)  )
