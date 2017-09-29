@@ -103,6 +103,7 @@ def controlLaw(kv,kw,a,r,rd,theta,om,eps,psi) :
 	return np.reshape( [ v(kv,a,r,rd,theta,om,eps,psi), w(kv,a,r,rd,theta,om,eps,psi) ], newshape=(2,1) )
 	
 	
+rd = dict()
 			
 while not rospy.is_shutdown() :
 	
@@ -277,15 +278,19 @@ while not rospy.is_shutdown() :
 						dist = np.sqrt( (dx)**2 + (dy)**2)
 						angular = np.arctan2(dy,dx) - robots[i]['theta']
 						dists.append( (obs[4], dist, angular) )
-					mindistobs = list( sorted(dists, key=lambda el : el[1] )[0] )
-					#refactoring the thetaobs var between -pi and +pi :
-					while mindistobs[2] >= np.pi :
-						mindistobs[2] -= 2*np.pi
-					while mindistobs[2] <= -np.pi :
-						mindistobs[2] += 2*np.pi
-					robots[i]['robs'] = mindistobs[1]
-					robots[i]['thetaobs'] = mindistobs[2]
-					
+					if len(dists) :
+						mindistobs = list( sorted(dists, key=lambda el : el[1] )[0] )
+						#refactoring the thetaobs var between -pi and +pi :
+						while mindistobs[2] >= np.pi :
+							mindistobs[2] -= 2*np.pi
+						while mindistobs[2] <= -np.pi :
+							mindistobs[2] += 2*np.pi
+						robots[i]['robs'] = mindistobs[1]
+						robots[i]['thetaobs'] = mindistobs[2]
+					else :
+						robots[i]['robs'] = 100.0
+						robots[i]['thetaobs'] = np.pi/2
+
 					# compute rddot :
 					robots[i]['rdd'] = rddot( args.kR, args.radius, rd[robots[i]['name']], args.thresholdDistAccount, robots[i]['robs'], robots[i]['thetaobs'] )
 					
