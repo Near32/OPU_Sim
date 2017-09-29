@@ -18,10 +18,14 @@ def publishModelStates(results,publisher) :
 	modelstate = ModelStates()
 	dummytwist = Twist()
 	state = None
-	while state is None :
-		if len(buffstate) :
-			state = buffstate[-1]
-			buffstate = []
+	if len(buffstate) :
+		state = buffstate[-1]
+		buffstate = []
+	else :
+		state = ModelStates()
+		state.name.append( 'self')
+		state.pose.append( Pose() )
+
 	# for synchro purpose : add the current state of the robot in the modelstate :
 	robotstateindex = [ index for index in range(len(state.name)) if 'self' in state.name[index] ][0]
 	modelstate.name.append('self')
@@ -61,14 +65,19 @@ def publishModelStates(results,publisher) :
 
 
 
-def uv2rtheta(u,v,rangeu=NORM_H/2,rangev=NORM_W,offsettheta=75) :
+def uv2rtheta(u,v,rangeu=NORM_H/2,rangev=NORM_W,offsettheta=-65) :
 	# u \in [rangeu, 2*rangeu]
-	u = -(u-2*rangeu)
+	u = 2*rangeu-u
 	# u \in [0, rangeu] u--> 0 == object near
-	r = 1.0/(u-rangeu)
+	r = 1.0/(rangeu-u)
 
-	rangetheta = 170
-	thetadeg = v/rangev*rangetheta + offsettheta
+	rangetheta = 175
+	v = rangev - v
+	#v \in [0 , rangev]
+	v = v/rangev*rangetheta
+	#v \in [0 , rangetheta]
+	thetadeg = v + offsettheta
+	#thetadeg \in [offsettheta , offsettheta+rangetheta]
 	thetarad = thetadeg*np.pi/180.0
 
 	return r,thetarad
@@ -132,17 +141,20 @@ def _on_imagebis(im) :
 	#cv2.imshow('res',res)
 	
 	results = []
-	'''meanx = 0.0
+	meanx = 0.0
 	meany =0.0
 	n = 0
-	for i in range(mask.shape[0]) :
-		for j in range(mask.shape[1]) :
-			if mask[i,j] >= 125 :
+	scale = 4.0
+	mask_rescale = cv2.resize( mask, (int(mask.shape[0]/scale), int(mask.shape[1]/scale) ) )
+	for i in range(mask_rescale.shape[0]) :
+		for j in range(mask_rescale.shape[1]) :
+			if mask_rescale[i,j] >= 125 :
 				n+= 1
 				meanx += i
 				meany += j
-	meanx /= n
-	meany /= n
+	meanx /= n/scale
+	meany /= n/scale
+	rospy.loginfo(' u,v = {} {} // {}'.format( meanx, meany, mask.shape)  )
 	results.append( ('bottle',[meanx,meany,meanx,meany] ) )
 	'''
 	# Set up the detector with default parameters.
@@ -160,6 +172,7 @@ def _on_imagebis(im) :
 	results = []
 	for elem in keypoints :
 		results.append( ('bottle',[elem.pt[0], elem.pt[1], elem.pt[0], elem.pt[1]] ) )
+	'''
 	return res, results
  
 def test_on_rpicam() :
@@ -167,9 +180,9 @@ def test_on_rpicam() :
 	camera = PiCamera()
 	camera.vflip = True
 	camera.hflip = True
-	camera.resolution = (640, 480)
+	camera.resolution = (NORM_W, NORM_H)
 	camera.framerate = 30
-	rawCapture = PiRGBArray(camera, size=(640, 480))
+	rawCapture = PiRGBArray(camera, size=camera.resolution)
 	 
 	# allow the camera to warmup
 	time.sleep(1)
@@ -206,12 +219,11 @@ def test_on_rpicam() :
 		# show the frame
 		outimage = cv2.resize(image, (320,240) )
 		outimg = cv2.resize(img, (320,240) )
-		#cv2.imshow("Frame", outimage)
+		cv2.imshow("Frame", outimage)
 		cv2.imshow("Frame Keypoints", outimg)
 
 
 		#HANDLE THE OUTPUT RESULTS HERE :
-		if True :
-			publishModelStates(results,publisher=pubmodelstate)
+		publishModelStates(results,publisher=pubmodelstate)
 
 test_on_rpicam()
