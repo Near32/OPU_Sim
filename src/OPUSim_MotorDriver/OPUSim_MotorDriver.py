@@ -4,11 +4,12 @@ from geometry_msgs.msg import Twist
 
 import RPi.GPIO as GPIO # import GPIO librery
 from test import MotorController, vw2rr
+import argparse
 
 
 
-m1A = 17
-m1B = 27
+m1A = 18
+m1B = 23
 m1E = 4
 
 mc1 = MotorController(m1A,m1B,m1E)
@@ -58,7 +59,7 @@ if __name__=="__main__":
 			mc1.setThrust(wheelvelocities[0])
 			mc1.setThrust(wheelvelocities[1])
 			
-			#rospy.loginfo(wheelvelocities)
+			rospy.loginfo(wheelvelocities)
 			
 
 	except Exception as e:
