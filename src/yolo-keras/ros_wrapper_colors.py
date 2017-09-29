@@ -9,17 +9,19 @@ import rospy
 from gazebo_msgs.msg import ModelStates
 from geometry_msgs.msg import Pose, Twist
 
+NORM_H = 480
+NORM_W = 640
+
 def publishModelStates(results,publisher) :
 	global buffstate
 	
 	modelstate = ModelStates()
 	dummytwist = Twist()
 	state = None
-	if len(buffstate) :
-		state = buffstate[-1]
-		buffstate = []
-	if state is None :
-		return		
+	while state is None :
+		if len(buffstate) :
+			state = buffstate[-1]
+			buffstate = []
 	# for synchro purpose : add the current state of the robot in the modelstate :
 	robotstateindex = [ index for index in range(len(state.name)) if 'self' in state.name[index] ][0]
 	modelstate.name.append('self')
@@ -37,9 +39,14 @@ def publishModelStates(results,publisher) :
 			meany = np.mean( [ pos[1], pos[3] ] )
 
 			r, theta = uv2rtheta(minx,meany)
+
+			rospy.loginfo(' target is at : r= {} // thetadeg= {}'.format(r,theta*180.0/np.pi) )
+
 			x = r*np.cos(theta)
 			y = r*np.sin(theta)
 
+			rospy.loginfo(' target is at : x= {} // y= {}'.format(x,y) )
+			
 			p = Pose()
 			p.position.x = x
 			p.position.y = y
@@ -54,21 +61,17 @@ def publishModelStates(results,publisher) :
 
 
 
-def uv2rtheta(u,v) :
+def uv2rtheta(u,v,rangeu=NORM_H/2,rangev=NORM_W,offsettheta=75) :
 	# u \in [rangeu, 2*rangeu]
-	rangeu = 480/2
 	u = -(u-2*rangeu)
 	# u \in [0, rangeu] u--> 0 == object near
 	r = 1.0/(u-rangeu)
 
-	rangev = 640
 	rangetheta = 170
-	offsettheta = 75
 	thetadeg = v/rangev*rangetheta + offsettheta
 	thetarad = thetadeg*np.pi/180.0
 
 	return r,thetarad
-
 
 
 import argparse
