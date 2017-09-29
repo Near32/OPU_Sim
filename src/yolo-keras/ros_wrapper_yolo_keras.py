@@ -172,9 +172,14 @@ def publishModelStates(results,publisher) :
 			meany = np.mean( [ pos[1], pos[3] ] )
 
 			r, theta = uv2rtheta(minx,meany)
+
+			rospy.loginfo(' target is at : r= {} // thetadeg= {}'.format(r,theta*180.0/np.pi) )
+
 			x = r*np.cos(theta)
 			y = r*np.sin(theta)
 
+			rospy.loginfo(' target is at : x= {} // y= {}'.format(x,y) )
+			
 			p = Pose()
 			p.position.x = x
 			p.position.y = y
@@ -189,16 +194,13 @@ def publishModelStates(results,publisher) :
 
 
 
-def uv2rtheta(u,v) :
+def uv2rtheta(u,v,rangeu=NORM_H/2,rangev=NORM_W,offsettheta=75) :
 	# u \in [rangeu, 2*rangeu]
-	rangeu = 156/2
 	u = -(u-2*rangeu)
 	# u \in [0, rangeu] u--> 0 == object near
 	r = 1.0/(u-rangeu)
 
-	rangev = 156
 	rangetheta = 170
-	offsettheta = 75
 	thetadeg = v/rangev*rangetheta + offsettheta
 	thetarad = thetadeg*np.pi/180.0
 
@@ -233,6 +235,7 @@ def test_on_rpicam() :
 	# initialize the camera and grab a reference to the raw camera capture
 	camera = PiCamera()
 	camera.vflip = True
+	camera.hflip = True
 	camera.resolution = (1088, 960)
 	camera.framerate = 30
 	rawCapture = PiRGBArray(camera, size=(1088, 960))

@@ -3,7 +3,8 @@
 	<arg name="robot_number" default="0" doc="Number of the robot we want to launch."/>
 	
 	<arg name="emergencyBreak" default="0" doc="Everything will be launched except that the cmd_vel-related topic is publishing 0."/>
-	<arg name="tresholdDistAccount" default="1.2" doc="Treshold for the distance of obstacles that we take into account for obstacle avoidance."/>
+	<arg name="thresholdDistAccount" default="1.2" doc="Threshold for the distance of obstacles that we take into account for obstacle avoidance."/>
+	<arg name="thresholdDistAssoc" default="5.0" doc="Threshold for the maximal distance between an observation and its already registered element to which it is associated, in centimeters."/>
 	<arg name="a" default="1.0" doc="coefficient : negative when N lesser than 2."/>
 	<arg name="kv" default="0.1" doc="coefficient to the radial velocity : negative when N lesser than 2."/>
 	<arg name="kw" default="0.2" doc="coefficient to the agular velocity : negative when Omega is negative."/>
@@ -32,9 +33,9 @@
 	</group>
 
 
-	<node pkg="OPUSim" name="ROS_EKF_DATMO_$(arg robot_number)" type="EKF_DATMO/ros_wrapper.py" 
+	<node pkg="OPUSim" name="ROS_EKF_DATMO_$(arg robot_number)" type="EKF_DATMO/src/ros_wrapper.py" 
 		args="-number $(arg robot_number)
-		-tresholdDistAccount $(arg tresholdDistAccount)"
+		-distAssoc $(arg thresholdDistAssoc)"
 	 respawn="true"/>
 
 
@@ -46,7 +47,7 @@
 		<node pkg="OPUSim" name="OPUSim_ControlLaw_Real_$(arg robot_number)" type="OPUSim_ControlLaw_Real/OPUSim_ControlLaw_Real.py" 
 			args="-number $(arg robot_number)
 			-emergencyBrek $(arg emergencyBreak)
-			-tDA $(arg tresholdDistAccount)
+			-tDA $(arg thresholdDistAccount)
 			-r $(arg R)
 			-a $(arg a)
 			-kv $(arg kv)
